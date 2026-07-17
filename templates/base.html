@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LuxeDrive{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <i class='bx bxs-car'></i>
+            <span>LuxeDrive</span>
+        </div>
+        <ul class="nav-links">
+            {% if g.user and g.user.role == 'admin' %}
+            <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class='bx bx-grid-alt'></i> Tableau de bord</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('voitures') }}" class="{% if request.endpoint == 'voitures' or request.endpoint == 'voitures_add' %}active{% endif %}"><i class='bx bx-car'></i> Voitures</a></li>
+            {% if g.user and g.user.role == 'admin' %}
+            <li><a href="{{ url_for('marques') }}" class="{% if request.endpoint == 'marques' %}active{% endif %}"><i class='bx bx-purchase-tag-alt'></i> Marques</a></li>
+            <li><a href="{{ url_for('clients') }}" class="{% if request.endpoint == 'clients' %}active{% endif %}"><i class='bx bx-user'></i> Clients</a></li>
+            <li><a href="{{ url_for('agents') }}" class="{% if request.endpoint == 'agents' %}active{% endif %}"><i class='bx bx-user-circle'></i> Agents</a></li>
+            <li><a href="{{ url_for('fournisseurs') }}" class="{% if request.endpoint == 'fournisseurs' %}active{% endif %}"><i class='bx bx-store-alt'></i> Fournisseurs</a></li>
+            <li><a href="{{ url_for('devis_select') }}" class="{% if request.endpoint == 'devis_select' %}active{% endif %}"><i class='bx bx-file'></i> Devis</a></li>
+            <li><a href="{{ url_for('transactions') }}" class="{% if request.endpoint == 'transactions' %}active{% endif %}"><i class='bx bx-cart'></i> Ventes & Achats</a></li>
+            {% endif %}
+            <li style="margin-top: 30px;"><a href="{{ url_for('logout') }}" style="color: #ff6b6b;"><i class='bx bx-log-out'></i> Déconnexion ({{ g.user.username if g.user else '' }})</a></li>
+        </ul>
+    </aside>
+
+    <div class="main-content">
+        <header>
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

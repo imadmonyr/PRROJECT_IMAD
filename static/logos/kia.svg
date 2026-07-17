@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- KIA dynamic logo shape -->
+    <path d="M-45,15 L-25,-15 L-12,-15 L-30,15 Z M-10,-15 L10,-15 L10,15 L-10,15 Z M18,-15 L35,15 L22,15 L12,-15 Z" fill="#E31837" opacity="0.1"/>
+    <!-- The modern KIA letters as a single path -->
+    <path d="M-38,15 L-38,-15 L-30,-15 L-30,0 L-18,-15 L-8,-15 L-22,0 L-8,15 L-18,15 L-27,5 L-27,15 Z" fill="#050505"/>
+    <path d="M-4,-15 L4,-15 L4,15 L-4,15 Z" fill="#050505"/>
+    <path d="M8,-15 L20,-15 L35,15 L27,15 L23,5 L14,5 L10,15 L2,15 Z M16,0 L21,0 L18.5,-6 Z" fill="#050505"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="22" font-weight="800" fill="#050505" text-anchor="middle" letter-spacing="4">KIA</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,90)">
+    <ellipse cx="0" cy="0" rx="60" ry="40" stroke="#1a1a1a" stroke-width="5" fill="none"/>
+    <ellipse cx="0" cy="0" rx="35" ry="24" stroke="#1a1a1a" stroke-width="4" fill="none"/>
+    <ellipse cx="0" cy="0" rx="16" ry="40" stroke="#1a1a1a" stroke-width="4" fill="none"/>
+    <line x1="0" y1="-40" x2="0" y2="-24" stroke="#1a1a1a" stroke-width="4"/>
+  </g>
+  <text x="100" y="158" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="3">TOYOTA</text>
+</svg>

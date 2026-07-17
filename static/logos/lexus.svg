@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <ellipse cx="0" cy="0" rx="55" ry="32" stroke="#1a1a1a" stroke-width="4.5" fill="none"/>
+    <!-- Lexus L logo inside oval -->
+    <path d="M-22,12 L-5,12 L16,-14 L5,-14 Z" fill="#1a1a1a"/>
+    <path d="M-22,12 L12,-18 L24,-18 L-12,12 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="4">LEXUS</text>
+</svg>

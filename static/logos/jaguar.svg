@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- Jaguar leaping silhouette -->
+    <path d="M-55,10 C-40,-5 -20,-15 5,-12 C15,-10 30,-5 48,-15 C38,-5 35,0 20,4 C5,8 -20,8 -35,5 C-45,3 -50,6 -55,10 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="3">JAGUAR</text>
+</svg>

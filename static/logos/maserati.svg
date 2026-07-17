@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- Trident -->
+    <path d="M-14,-35 L-14,-15 C-14,-5 0,-2 0,-2 C0,-2 14,-5 14,-15 L14,-35 L9,-35 L9,-18 C9,-10 -5,-10 -5,-18 L-5,-35 Z" fill="#0A3B7C"/>
+    <path d="M-2,-38 L2,-38 L2,20 L-2,20 Z" fill="#0A3B7C"/>
+    <polygon points="-14,-35 -9,-35 -11.5,-42" fill="#0A3B7C"/>
+    <polygon points="14,-35 9,-35 11.5,-42" fill="#0A3B7C"/>
+    <polygon points="-2,-38 2,-38 0,-45" fill="#0A3B7C"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#0A3B7C" text-anchor="middle" letter-spacing="2">MASERATI</text>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <circle cx="0" cy="0" r="24" stroke="#1a1a1a" stroke-width="4.5" fill="none"/>
+    <!-- Wings of MINI logo -->
+    <path d="M-24,-4 L-48,-14 L-48,-8 L-24,4 Z" fill="#1a1a1a"/>
+    <path d="M24,-4 L48,-14 L48,-8 L24,4 Z" fill="#1a1a1a"/>
+    <path d="M-24,-10 L-44,-17 L-44,-13 L-24,-4 Z" fill="#1a1a1a"/>
+    <path d="M24,-10 L44,-17 L44,-13 L24,-4 Z" fill="#1a1a1a"/>
+    <text x="0" y="6" font-family="Arial,sans-serif" font-size="12" font-weight="900" fill="#1a1a1a" text-anchor="middle">MINI</text>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="4">MINI</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <circle cx="0" cy="0" r="38" stroke="#1a1a1a" stroke-width="4.5" fill="none"/>
+    <!-- Opel lightning bolt -->
+    <path d="M-28,6 L-2,6 L-10,24 L10,24 L28,-6 L4,-6 L10,-24 L-10,-24 Z" fill="#1a1a1a" opacity="0.1"/>
+    <path d="M-24,4 L0,4 L-8,16 L12,16 L24,-4 L4,-4 L8,-16 L-12,-16 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="4">OPEL</text>
+</svg>

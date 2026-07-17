@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Ventes & Achats - LuxeDrive{% endblock %}
+{% block page_title %}Ventes & Achats{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="margin-bottom: 2rem;">
+    <div class="table-container" style="margin-bottom: 0;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.1rem; font-weight: 600;">Historique des Ventes</h2>
+            <div>
+                <a href="{{ url_for('devis_select') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #D4AF37; color: #000; margin-right: 5px;"><i class='bx bx-file'></i> Générer un Devis</a>
+                <button onclick="window.print()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #475569; margin-right: 5px;"><i class='bx bx-printer'></i> Imprimer</button>
+                <a href="{{ url_for('ventes_add') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i class='bx bx-cart-add'></i> Nouvelle Vente</a>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Agent (Commission)</th>
+                    <th>Véhicule (VIN)</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vente in ventes %}
+                <tr>
+                    <td>#{{ vente.id_vente }}</td>
+                    <td>{{ vente.date_vente }}</td>
+                    <td style="font-weight: 500;">{{ vente.prenom }} {{ vente.nom }}</td>
+                    <td style="color: var(--text-muted);">
+                        {% if vente.agent_nom %}
+                            {{ vente.agent_prenom }} {{ vente.agent_nom }}
+                            <br><span style="font-size: 0.8rem; color: var(--success); font-weight: bold;">+{{ "{:,.2f}".format(vente.montant_commission) }} MAD</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="font-family: monospace; color: var(--text-muted);">{{ vente.vin }}</td>
+                    <td style="font-weight: 600; color: var(--success);">{% if vente.total %}{{ "{:,.2f}".format(vente.total) }} MAD{% else %}-{% endif %}</td>
+                    <td>
+                        <a href="{{ url_for('confirmation', id_vente=vente.id_vente) }}" class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; background: linear-gradient(135deg, #065f46, #059669); white-space: nowrap;" title="Bon de Confirmation"><i class='bx bx-check-circle'></i> Bon</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Aucune vente enregistrée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-container" style="margin-bottom: 0;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 1.1rem; font-weight: 600;">Historique des Achats</h2>
+            <div>
+                <button onclick="window.print()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #475569; margin-right: 5px;"><i class='bx bx-printer'></i> Imprimer</button>
+                <a href="#" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i class='bx bx-cart-download'></i> Nouvel Achat</a>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID CMD</th>
+                    <th>Date</th>
+                    <th>Fournisseur</th>
+                    <th>Véhicule (VIN)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for achat in achats %}
+                <tr>
+                    <td>#{{ achat.id_cmdA }}</td>
+                    <td>{{ achat.date_cmd }}</td>
+                    <td style="font-weight: 500;">{{ achat.fnom }}</td>
+                    <td style="font-family: monospace; color: var(--text-muted);">{{ achat.vin }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Aucun achat enregistré.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

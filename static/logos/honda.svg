@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <rect x="-35" y="-35" width="70" height="70" rx="14" stroke="#1a1a1a" stroke-width="4.5" fill="none"/>
+    <!-- Honda H letter -->
+    <path d="M-18,-20 L-10,-20 L-10,20 L-18,20 Z" fill="#1a1a1a"/>
+    <path d="M10,-20 L18,-20 L18,20 L10,20 Z" fill="#1a1a1a"/>
+    <path d="M-10,-2 L10,-2 L10,4 L-10,4 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a" text-anchor="middle" letter-spacing="4">HONDA</text>
+</svg>

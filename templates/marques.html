@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Marques - LuxeDrive{% endblock %}
+{% block page_title %}Marques de Prestige{% endblock %}
+
+{% block content %}
+<div class="header-actions">
+    <h2 style="font-weight: 600; font-size: 1.25rem;">Nos Marques Partenaires</h2>
+    <div>
+        <a href="#add-marque-modal" class="btn"><i class='bx bx-plus'></i> Ajouter une Marque</a>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="table-container" style="margin-bottom: 2rem; padding: 1rem; display: flex; align-items: center; gap: 10px; background-color: var(--card-bg);">
+    <i class='bx bx-search' style="font-size: 1.5rem; color: var(--text-muted);"></i>
+    <input type="text" id="search-brand" placeholder="Rechercher une marque..." style="background: none; border: none; color: var(--text-main); font-size: 1rem; width: 100%; outline: none;">
+</div>
+
+<!-- Brand Grid -->
+<div class="brand-grid-container">
+    {% for marque in marques %}
+    <a href="{{ url_for('marque_detail', id_marque=marque.id_marque) }}" class="brand-card-link" data-name="{{ marque.nom_marque | lower }}">
+    <div class="brand-card">
+        <div class="brand-logo-wrapper">
+            {% set logo_filename = marque.nom_marque | lower | replace(' ', '_') ~ '.svg' %}
+            <img src="{{ url_for('static', filename='logos/' ~ logo_filename) }}" 
+                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='logos/default.svg') }}';" 
+                 alt="{{ marque.nom_marque }}">
+        </div>
+        <div class="brand-details">
+            <span class="brand-name">{{ marque.nom_marque }}</span>
+            <span class="brand-count">{{ marque.voiture_count }} {% if marque.voiture_count > 1 %}voitures{% else %}voiture{% endif %}</span>
+        </div>
+    </div>
+    </a>
+    {% else %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+        Aucune marque enregistrée.
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Simple inline Modal using CSS :target -->
+<div id="add-marque-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Ajouter une Nouvelle Marque</h3>
+            <a href="#" class="close-btn">&times;</a>
+        </div>
+        <form method="POST" action="{{ url_for('marques') }}">
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="nom_marque">Nom de la Marque</label>
+                <input type="text" id="nom_marque" name="nom_marque" required placeholder="Ex: Mercedes, Audi, Porsche...">
+            </div>
+            <div class="form-group">
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    <i class='bx bx-info-circle'></i> Si un logo correspondant (format SVG/PNG) existe dans le dossier des logos, il sera automatiquement associé.
+                </p>
+            </div>
+            <div style="text-align: right; margin-top: 2rem;">
+                <a href="#" class="btn btn-secondary" style="background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); margin-right: 10px;">Annuler</a>
+                <button type="submit" class="btn">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Grid Layout resembling Wandaloo.com */
+.brand-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.brand-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    height: 200px;
+}
+
+.brand-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+}
+
+.brand-logo-wrapper {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background: #ffffff; /* White background to match the original logos look */
+    padding: 0.5rem;
+    overflow: hidden;
+}
+
+.brand-logo-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.brand-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.brand-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.brand-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.modal-overlay:target {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay:target .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent-gold);
+}
+
+.close-btn {
+    font-size: 2rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--danger);
+}
+</style>
+
+<style>
+.brand-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+</style>
+
+<script>
+document.getElementById('search-brand').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    const links = document.querySelectorAll('.brand-card-link');
+    links.forEach(link => {
+        const name = link.getAttribute('data-name');
+        link.style.display = name.includes(query) ? 'block' : 'none';
+    });
+});
+</script>
+{% endblock %}

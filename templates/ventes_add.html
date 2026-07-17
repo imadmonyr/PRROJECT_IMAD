@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvelle Vente - LuxeDrive{% endblock %}
+{% block page_title %}Enregistrer une Vente{% endblock %}
+
+{% block content %}
+<div class="header-actions">
+    <a href="{{ url_for('transactions') }}" class="btn" style="background-color: var(--sidebar-bg); border: 1px solid var(--border-color);"><i class='bx bx-arrow-back'></i> Retour</a>
+</div>
+
+<div class="form-container">
+    <form method="POST" action="{{ url_for('ventes_add') }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="date_vente">Date de Vente</label>
+                <input type="date" id="date_vente" name="date_vente" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_client">Client</label>
+                <select id="id_client" name="id_client" required>
+                    <option value="" disabled selected>Sélectionner un client</option>
+                    {% for client in clients %}
+                        <option value="{{ client.id_client }}">{{ client.prenom }} {{ client.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="vin">Voiture (VIN)</label>
+                <select id="vin" name="vin" required>
+                    <option value="" disabled selected>Sélectionner une voiture en stock</option>
+                    {% for voiture in voitures %}
+                        <option value="{{ voiture.vin }}">{{ voiture.nom_marque }} {{ voiture.nom_modele }} ({{ voiture.immatriculation }}) - {{ "{:,.2f}".format(voiture.prix_vente) }} MAD</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="id_agent">Agent (Optionnel)</label>
+                <select id="id_agent" name="id_agent">
+                    <option value="">Aucun Agent</option>
+                    {% for agent in agents %}
+                        <option value="{{ agent.id_agent }}">{{ agent.prenom }} {{ agent.nom }} ({{ agent.taux_commission }}%)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                    <i class='bx bx-info-circle'></i> Si un agent est sélectionné, sa commission sera automatiquement calculée à partir du prix de vente de la voiture et de son taux de commission.
+                </p>
+            </div>
+        </div>
+        
+        <div class="form-actions" style="margin-top: 2rem; text-align: right;">
+            <button type="submit" class="btn"><i class='bx bx-check'></i> Valider la Vente</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('date_vente').valueAsDate = new Date();
+</script>
+{% endblock %}

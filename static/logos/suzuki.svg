@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- Suzuki stylized S -->
+    <path d="M-25,-32 L15,-32 L-15,10 L25,10 L15,28 L-25,28 L5,-14 Z" fill="#002C5F" stroke="#E31837" stroke-width="1.5"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#002C5F" text-anchor="middle" letter-spacing="3">SUZUKI</text>
+</svg>

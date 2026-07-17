@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,82)">
+    <circle cx="0" cy="0" r="35" stroke="#990000" stroke-width="4.5" fill="none"/>
+    <circle cx="0" cy="0" r="30" stroke="#00356B" stroke-width="2" fill="none"/>
+    <!-- Red Cross on left, serpent on right representation -->
+    <line x1="-15" y1="0" x2="-2" y2="0" stroke="#990000" stroke-width="4"/>
+    <line x1="-8.5" y1="-7.5" x2="-8.5" y2="7.5" stroke="#990000" stroke-width="4"/>
+    <!-- serpent -->
+    <path d="M5,-15 Q15,-10 10,0 Q5,10 15,15" stroke="#008000" stroke-width="3.5" fill="none"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#990000" text-anchor="middle" letter-spacing="1.5">ALFA ROMEO</text>
+</svg>

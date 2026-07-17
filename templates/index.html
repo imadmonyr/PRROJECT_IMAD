@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord - LuxeDrive{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <div class="stat-title">Total Voitures en Stock</div>
+        <div class="stat-value">{{ total_voitures }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Total Clients</div>
+        <div class="stat-value">{{ total_clients }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-title">Total Ventes</div>
+        <div class="stat-value">{{ total_ventes }}</div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 1.1rem; font-weight: 600;">Dernières Activités</h2>
+    </div>
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <i class='bx bx-time' style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <p>Aucune activité récente à afficher.</p>
+    </div>
+</div>
+{% endblock %}

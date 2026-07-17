@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Voitures - LuxeDrive{% endblock %}
+{% block page_title %}Gestion des Voitures{% endblock %}
+
+{% block content %}
+<div class="header-actions">
+    <h2 style="font-weight: 600; font-size: 1.25rem;">Inventaire Automobile</h2>
+    <div>
+        <button onclick="window.print()" class="btn" style="background-color: #475569; margin-right: 10px;"><i class='bx bx-printer'></i> Imprimer</button>
+        {% if g.user and g.user.role == 'admin' %}
+        <a href="{{ url_for('voitures_add') }}" class="btn"><i class='bx bx-plus'></i> Ajouter une voiture</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>VIN</th>
+                <th>Marque & Modèle</th>
+                <th>Type</th>
+                <th>Immatriculation</th>
+                <th>Année</th>
+                <th>Prix de vente</th>
+                <th>Statut</th>
+                {% if g.user and g.user.role == 'user' %}
+                <th>Action</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for voiture in voitures %}
+            <tr>
+                <td style="font-family: monospace; color: var(--text-muted);">{{ voiture.vin }}</td>
+                <td style="font-weight: 500;">{{ voiture.nom_marque }} {{ voiture.nom_modele }}</td>
+                <td><span class="badge {{ voiture.type }}">{{ voiture.type | capitalize }}</span></td>
+                <td>{{ voiture.immatriculation }}</td>
+                <td>{{ voiture.annee }}</td>
+                <td style="font-weight: 600;">{{ "{:,.2f}".format(voiture.prix_vente) }} MAD</td>
+                <td><span class="badge {{ voiture.statut }}">{{ voiture.statut | replace('_', ' ') | capitalize }}</span></td>
+                {% if g.user and g.user.role == 'user' %}
+                <td>
+                    {% if voiture.statut == 'en_stock' %}
+                    <form action="{{ url_for('voitures_buy', vin=voiture.vin) }}" method="POST" style="margin:0;">
+                        <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.85rem; background-color: #28a745;">Acheter</button>
+                    </form>
+                    {% else %}
+                    <span style="color: #999; font-size: 0.85rem;">Indisponible</span>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">Aucune voiture trouvée.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

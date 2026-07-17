@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <circle cx="0" cy="0" r="38" stroke="#1a1a1a" stroke-width="4.5" fill="none"/>
+    <!-- Mazda winged M shape inside circle -->
+    <path d="M-30,-2 L-10,-14 L0,10 L10,-14 L30,-2 C20,12 -20,12 -30,-2 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="3">MAZDA</text>
+</svg>

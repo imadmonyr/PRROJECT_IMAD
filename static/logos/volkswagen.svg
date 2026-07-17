@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <circle cx="0" cy="0" r="42" stroke="#1a1a1a" stroke-width="5" fill="none"/>
+    <!-- V and W letters inside circle -->
+    <path d="M-22,-20 L-8,18 L8,18 L22,-20 L13,-20 L0,10 L-13,-20 Z" fill="#1a1a1a"/>
+    <path d="M-15,-20 L-6,-2 L6,-2 L15,-20 L7,-20 L0,-6 L-7,-20 Z" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">VOLKSWAGEN</text>
+</svg>

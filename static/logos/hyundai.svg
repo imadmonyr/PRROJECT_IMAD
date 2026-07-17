@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <ellipse cx="0" cy="0" rx="55" ry="30" stroke="#002C5F" stroke-width="4.5" fill="none"/>
+    <!-- Slanted H inside oval -->
+    <path d="M-18,-16 L-8,-16 L-16,16 L-26,16 Z" fill="#002C5F"/>
+    <path d="M16,-16 L26,-16 L18,16 L8,16 Z" fill="#002C5F"/>
+    <path d="M-15,-2 L15,-2 L13,4 L-17,4 Z" fill="#002C5F"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#002C5F" text-anchor="middle" letter-spacing="2">HYUNDAI</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- Tesla T logo -->
+    <path d="M-40,-30 C0,-18 0,-18 40,-30 L36,-24 C0,-12 0,-12 -36,-24 Z" fill="#E82127"/>
+    <path d="M-30,-22 C0,-12 0,-12 30,-22 L30,-18 C0,-8 0,-8 -30,-18 Z" fill="#E82127" opacity="0.5"/>
+    <path d="M-6,-15 L6,-15 L4,10 C0,22 0,22 0,32 C0,22 0,22 -4,10 Z" fill="#E82127"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#E82127" text-anchor="middle" letter-spacing="4">TESLA</text>
+</svg>

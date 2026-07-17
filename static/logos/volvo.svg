@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(90,95)">
+    <circle cx="0" cy="0" r="32" stroke="#1a1a1a" stroke-width="6" fill="none"/>
+    <!-- Diagonal arrow top-right -->
+    <path d="M22.6,-22.6 L45,-45" stroke="#1a1a1a" stroke-width="6" stroke-linecap="square"/>
+    <polygon points="45,-45 32,-45 45,-32" fill="#1a1a1a"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="4">VOLVO</text>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <ellipse cx="0" cy="0" rx="55" ry="32" stroke="#00356B" stroke-width="4.5" fill="none"/>
+    <text x="0" y="9" font-family="Arial,sans-serif" font-size="22" font-weight="900" fill="#00356B" text-anchor="middle" letter-spacing="3">BYD</text>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#00356B" text-anchor="middle" letter-spacing="3">BYD</text>
+</svg>

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter une Voiture - LuxeDrive{% endblock %}
+{% block page_title %}Ajouter une Voiture{% endblock %}
+
+{% block content %}
+<div class="header-actions">
+    <a href="{{ url_for('voitures') }}" class="btn" style="background-color: var(--sidebar-bg); border: 1px solid var(--border-color);"><i class='bx bx-arrow-back'></i> Retour</a>
+</div>
+
+<div class="form-container">
+    {% if error %}
+    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+        <i class='bx bx-error-circle' style="font-size: 1.25rem;"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('voitures_add') }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="vin">Numéro VIN</label>
+                <input type="text" id="vin" name="vin" required placeholder="Ex: WBA00000000000">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_modele">Marque & Modèle</label>
+                <select id="id_modele" name="id_modele" required>
+                    <option value="" disabled selected>Sélectionner un modèle</option>
+                    {% for modele in modeles %}
+                        <option value="{{ modele.id_modele }}">{{ modele.nom_marque }} {{ modele.nom_modele }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="type">État</label>
+                <select id="type" name="type" required>
+                    <option value="neuf">Neuf</option>
+                    <option value="occasion">Occasion</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="position: relative;">
+                <label for="immatriculation">Immatriculation</label>
+                <input type="text" id="immatriculation" name="immatriculation" placeholder="Ex: 1234-A-56" required
+                       pattern="^\s*\d{1,5}\s*-\s*[a-zA-Z\u0621-\u064A\u0671-\u0680]\s*-\s*\d{1,3}\s*$"
+                       title="Le format doit être : 1234-A-56 ou 1234-أ-56 (1 à 5 chiffres, suivi d'un tiret, une lettre en arabe ou français, un tiret, puis 1 à 3 chiffres pour la région)">
+                
+                <div id="plate-preview-wrapper" class="moroccan-plate-wrapper">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 6px 0;">Aperçu de la plaque marocaine :</div>
+                    <div class="moroccan-plate">
+                        <div class="plate-ma"><span>MA</span></div>
+                        <div class="plate-part plate-digits" id="plate-digits-val">1234</div>
+                        <div class="plate-letter-box">
+                            <span class="plate-letter-arabic" id="plate-letter-ar-val">أ</span>
+                            <div class="plate-letter-divider"></div>
+                            <span class="plate-letter-latin" id="plate-letter-la-val">A</span>
+                        </div>
+                        <div class="plate-part plate-region" id="plate-region-val">56</div>
+                    </div>
+                </div>
+                
+                <div id="validation-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 8px; display: none;">
+                    <i class='bx bx-error-circle'></i> Format invalide. Exemple correct : 1234-A-56 ou 1234-أ-56
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="annee">Année</label>
+                <input type="number" id="annee" name="annee" min="1900" max="2099" step="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="statut">Statut</label>
+                <select id="statut" name="statut" required>
+                    <option value="en_stock">En Stock</option>
+                    <option value="reservee">Réservée</option>
+                    <option value="vendue">Vendue</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="prix_achat">Prix d'Achat (MAD)</label>
+                <input type="number" id="prix_achat" name="prix_achat" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="prix_vente">Prix de Vente (MAD)</label>
+                <input type="number" id="prix_vente" name="prix_vente" step="0.01" required>
+            </div>
+        </div>
+        
+        <div class="form-actions" style="margin-top: 2rem; text-align: right;">
+            <button type="submit" class="btn"><i class='bx bx-save'></i> Enregistrer la voiture</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const immatInput = document.getElementById('immatriculation');
+    const previewWrapper = document.getElementById('plate-preview-wrapper');
+    const errorDiv = document.getElementById('validation-error');
+    
+    const digitsVal = document.getElementById('plate-digits-val');
+    const letterArVal = document.getElementById('plate-letter-ar-val');
+    const letterLaVal = document.getElementById('plate-letter-la-val');
+    const regionVal = document.getElementById('plate-region-val');
+    
+    const mapLetters = {
+        'A': { ar: 'أ', fr: 'A' }, 'a': { ar: 'أ', fr: 'A' }, 'أ': { ar: 'أ', fr: 'A' },
+        'B': { ar: 'ب', fr: 'B' }, 'b': { ar: 'ب', fr: 'B' }, 'ب': { ar: 'ب', fr: 'B' },
+        'D': { ar: 'د', fr: 'D' }, 'd': { ar: 'د', fr: 'D' }, 'د': { ar: 'د', fr: 'D' },
+        'H': { ar: 'هـ', fr: 'H' }, 'h': { ar: 'هـ', fr: 'H' }, 'هـ': { ar: 'هـ', fr: 'H' }, 'ه': { ar: 'هـ', fr: 'H' },
+        'O': { ar: 'و', fr: 'O' }, 'o': { ar: 'و', fr: 'O' }, 'W': { ar: 'و', fr: 'W' }, 'w': { ar: 'و', fr: 'W' }, 'و': { ar: 'و', fr: 'W' },
+        'T': { ar: 'ط', fr: 'T' }, 't': { ar: 'ط', fr: 'T' }, 'ط': { ar: 'ط', fr: 'T' },
+        'Y': { ar: 'ي', fr: 'Y' }, 'y': { ar: 'ي', fr: 'Y' }, 'ي': { ar: 'ي', fr: 'Y' },
+        'K': { ar: 'ك', fr: 'K' }, 'k': { ar: 'ك', fr: 'K' }, 'ك': { ar: 'ك', fr: 'K' },
+        'L': { ar: 'ل', fr: 'L' }, 'l': { ar: 'ل', fr: 'L' }, 'ل': { ar: 'ل', fr: 'L' },
+        'M': { ar: 'م', fr: 'M' }, 'm': { ar: 'م', fr: 'M' }, 'م': { ar: 'م', fr: 'M' },
+        'N': { ar: 'ن', fr: 'N' }, 'n': { ar: 'ن', fr: 'N' }, 'ن': { ar: 'ن', fr: 'N' },
+        'S': { ar: 'س', fr: 'S' }, 's': { ar: 'س', fr: 'S' }, 'س': { ar: 'س', fr: 'S' },
+        'E': { ar: 'ع', fr: 'E' }, 'e': { ar: 'ع', fr: 'E' }, 'ع': { ar: 'ع', fr: 'E' },
+        'F': { ar: 'ف', fr: 'F' }, 'f': { ar: 'ف', fr: 'F' }, 'ف': { ar: 'ف', fr: 'F' },
+        'C': { ar: 'ص', fr: 'C' }, 'c': { ar: 'ص', fr: 'C' }, 'ص': { ar: 'ص', fr: 'C' },
+        'G': { ar: 'ق', fr: 'G' }, 'g': { ar: 'ق', fr: 'G' }, 'Q': { ar: 'ق', fr: 'Q' }, 'q': { ar: 'ق', fr: 'Q' }, 'ق': { ar: 'ق', fr: 'Q' },
+        'R': { ar: 'ر', fr: 'R' }, 'r': { ar: 'ر', fr: 'R' }, 'ر': { ar: 'ر', fr: 'R' },
+        'X': { ar: 'ش', fr: 'X' }, 'x': { ar: 'ش', fr: 'X' }, 'ش': { ar: 'ش', fr: 'X' },
+        'Z': { ar: 'ت', fr: 'Z' }, 'z': { ar: 'ت', fr: 'Z' }, 'ت': { ar: 'ت', fr: 'Z' },
+        'J': { ar: 'ج', fr: 'J' }, 'j': { ar: 'ج', fr: 'J' }, 'ج': { ar: 'ج', fr: 'J' },
+        'I': { ar: 'إ', fr: 'I' }, 'i': { ar: 'إ', fr: 'I' }, 'إ': { ar: 'إ', fr: 'I' }
+    };
+    
+    const pattern = /^\s*(\d{1,5})\s*-\s*([a-zA-Z\u0621-\u064A\u0671-\u0680])\s*-\s*(\d{1,3})\s*$/;
+    
+    function validateInput() {
+        const value = immatInput.value.trim();
+        
+        if (value === "") {
+            previewWrapper.style.display = 'none';
+            errorDiv.style.display = 'none';
+            immatInput.style.borderColor = 'var(--border-color)';
+            immatInput.style.boxShadow = 'none';
+            return;
+        }
+        
+        const match = value.match(pattern);
+        
+        if (match) {
+            const digits = match[1];
+            const letter = match[2];
+            const region = match[3];
+            
+            let ar = letter;
+            let fr = letter.toUpperCase();
+            if (mapLetters[letter]) {
+                ar = mapLetters[letter].ar;
+                fr = mapLetters[letter].fr;
+            }
+            
+            digitsVal.textContent = digits;
+            letterArVal.textContent = ar;
+            letterLaVal.textContent = fr;
+            regionVal.textContent = region;
+            
+            previewWrapper.style.display = 'block';
+            errorDiv.style.display = 'none';
+            immatInput.style.borderColor = 'var(--success)';
+            immatInput.style.boxShadow = '0 0 0 2px rgba(16, 185, 129, 0.2)';
+            immatInput.setCustomValidity('');
+        } else {
+            previewWrapper.style.display = 'none';
+            errorDiv.style.display = 'block';
+            immatInput.style.borderColor = 'var(--danger)';
+            immatInput.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
+            immatInput.setCustomValidity('Format d\'immatriculation invalide. Exemple correct : 1234-A-56');
+        }
+    }
+    
+    immatInput.addEventListener('input', validateInput);
+    
+    if (immatInput.value) {
+        validateInput();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="20" fill="#ffffff"/>
+  <g transform="translate(100,85)">
+    <!-- Citroen double chevron -->
+    <path d="M-35,15 L0,-15 L35,15" stroke="#1a1a1a" stroke-width="7.5" fill="none" stroke-linejoin="round"/>
+    <path d="M-35,-10 L0,-40 L35,-10" stroke="#1a1a1a" stroke-width="7.5" fill="none" stroke-linejoin="round"/>
+  </g>
+  <text x="100" y="160" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="#1a1a1a" text-anchor="middle" letter-spacing="2">CITROEN</text>
+</svg>
