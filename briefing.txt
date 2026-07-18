@@ -1,289 +1,297 @@
 ====================================================
-    LUXEDRIVE — PROJECT BRIEFING
-    Last updated: July 18, 2026
-    ====================================================
+  LUXEDRIVE — PROJECT BRIEFING
+  Last updated: July 18, 2026
+====================================================
 
-    PROJECT OVERVIEW
-    ----------------
-    Name: LuxeDrive
-    Type: Car dealership management system (gestion de voitures)
-    Language: Python (Flask) + SQLite + Jinja2 HTML templates
-    Market: Moroccan (prices in MAD, Moroccan plate format)
-    UI Language: French
-    Theme: Dark UI — black background (#050505), red primary (#990000), gold accent (#D4AF37)
+PROJECT OVERVIEW
+----------------
+Name: LuxeDrive
+Type: Car dealership management system (gestion de voitures)
+Language: Python (Flask) + SQLite + Jinja2 HTML templates
+Market: Moroccan (prices in MAD, Moroccan plate format)
+UI Language: French
+Theme: Dark UI — black background (#050505), red primary (#990000), gold accent (#D4AF37)
 
-    The app runs LOCALLY on the user's PC. It is NOT deployed online.
-    To run: activate venv, then `python app.py`. Browser opens automatically at http://127.0.0.1:5000
+The app runs LOCALLY on the user's PC. It is NOT deployed online.
+To run: activate venv, then `python app.py`. Browser opens automatically at http://127.0.0.1:5000
 
-    GitHub repo: https://github.com/imadmonyr/PRROJECT_IMAD
-    Note: GitHub only contains a PARTIAL copy of the project (the key files).
-    The FULL project lives locally at:
-    C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\
-
-
-    HOW TO RUN
-    ----------
-    1. Open Command Prompt (cmd) — NOT PowerShell (PowerShell blocks venv activation)
-    2. Navigate to project folder:
-     cd "C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture"
-    3. Activate virtual environment:
-     venv\Scripts\activate
-    4. Run the app:
-     python app.py
-    5. Browser opens automatically at http://127.0.0.1:5000
+GitHub repo: https://github.com/imadmonyr/PRROJECT_IMAD
+Note: GitHub only contains a PARTIAL copy of the project (the key files).
+The FULL project lives locally at:
+  C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\
 
 
-    DATABASE
-    --------
-    File: database.db (located in the root project folder)
-    Full path: C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\database.db
-    Engine: SQLite
-    Viewer tool: DB Browser for SQLite (sqlitebrowser.org) — open database.db to browse/edit data
-    OR: SQLite Viewer extension in VS Code
-
-    The app writes directly to this file. Any car/client/sale added through the website
-    is saved here instantly.
-
-
-    DATABASE SCHEMA (tables)
-    ------------------------
-    - marque          → car brands
-    - modele          → car models (linked to marque)  ← MODIFIED (see below)
-    - voiture         → cars (VIN, model, type, plate, year, buy price, sell price, status)
-    - client          → customers
-    - fournisseur     → suppliers
-    - agent           → sales agents (with commission rate %)
-    - commande_achat  → purchase orders (from suppliers)
-    - ligne_achat     → cars per purchase order (links commande_achat → voiture by VIN)
-    - vente           → sales transactions
-    - ligne_vente     → cars per sale (links vente → voiture by VIN)
-    - facture         → invoices  ← NOW ACTUALLY WRITTEN ON EVERY SALE
-    - paiement        → payments
-    - historique_proprietaire → ownership history
-    - devis           → quote requests (client devis history)  ← ADDED TO init_db
-    - user            → app users (roles: admin / user)
-
-    User roles:
-    admin → full access to everything
-    user  → browse all brands, see available cars, request a devis (quote)
+HOW TO RUN
+----------
+1. Open Command Prompt (cmd) — NOT PowerShell (PowerShell blocks venv activation)
+2. Navigate to project folder:
+   cd "C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture"
+3. Activate virtual environment:
+   venv\Scripts\activate
+4. Run the app:
+   python app.py
+5. Browser opens automatically at http://127.0.0.1:5000
 
 
-    ⚠ DATABASE CHANGES MADE BY AGENT (IMPORTANT FOR MCD/MLD)
-    ----------------------------------------------------------
-    The following changes were made to the database structure and data.
-    These changes affect your MCD (Modèle Conceptuel de Données) and MLD
-    (Modèle Logique de Données) — update them accordingly.
+DATABASE
+--------
+File: database.db (located in the root project folder)
+Full path: C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\database.db
+Engine: SQLite
+Viewer tool: DB Browser for SQLite (sqlitebrowser.org) — open database.db to browse/edit data
+  OR: SQLite Viewer extension in VS Code
 
-    1. NEW COLUMN ADDED: modele.image_url
-     Table:  modele
-     Column: image_url TEXT (nullable)
-     Purpose: Stores a URL to a real car photo, displayed on the brand detail page.
-     MCD impact: The "Modèle" entity now has an additional attribute: image_url (URL)
-     MLD impact: modele(id_modele, nom_modele, id_marque, image_url)
-                 was: modele(id_modele, nom_modele, id_marque)
-
-    2. NEW MODELS INSERTED (24 new rows in the modele table)
-     The original seed data had 19 models across 8 brands.
-     The agent added 3 new models per brand = 24 additional models.
-     Total after update: 43 models.
-
-     New models added per brand:
-     ┌────────────────┬──────────────────────────────────────────┐
-     │ Brand          │ New Models Added                         │
-     ├────────────────┼──────────────────────────────────────────┤
-     │ Mercedes-Benz  │ EQS 580 4MATIC, Classe C 300d, GLC 300  │
-     │ BMW            │ M5 G90, i7 xDrive60, X5 M Competition   │
-     │ Audi           │ R8 V10 Plus, e-tron GT RS, SQ8 TFSI     │
-     │ Porsche        │ Taycan Turbo S, Macan GTS, 718 Spyder RS │
-     │ Ferrari        │ SF90 XX Stradale, 296 GTB, Roma Spider   │
-     │ Lamborghini    │ Revuelto, Urus SE, Huracán Sterrato      │
-     │ Bentley        │ Continental GT Speed, Bentayga EWB, Flying Spur S │
-     │ Rolls-Royce    │ Spectre, Ghost Black Badge, Cullinan Series II │
-     └────────────────┴──────────────────────────────────────────┘
+The app writes directly to this file. Any car/client/sale added through the website
+is saved here instantly.
 
 
-    FEATURES IMPLEMENTED
-    --------------------
-    The following features have been fully implemented. This list is the source of truth
-    for what the app can and cannot do.
+DATABASE SCHEMA (all tables)
+-----------------------------
+Original tables (from initial project):
+  - marque               -> car brands
+  - modele               -> car models (linked to marque)
+  - voiture              -> cars (VIN, model, type, plate, year, buy/sell price, status)
+  - client               -> customers
+  - fournisseur          -> suppliers
+  - agent                -> sales agents (with commission rate %)
+  - commande_achat       -> purchase orders (from suppliers)
+  - ligne_achat          -> cars per purchase order (commande_achat <-> voiture)
+  - vente                -> sales transactions
+  - ligne_vente          -> cars per sale (vente <-> voiture)
+  - facture              -> invoices (linked to vente, NOW written on every sale)
+  - paiement             -> payments (linked to facture)
+  - historique_proprietaire -> ownership history
+  - user                 -> app users (roles: admin / user)
 
-    ✅ 1. Edit & Delete cars
-     Routes: /voitures/edit/<vin>  (GET/POST)
-             /voitures/delete/<vin> (POST)
-     Files:  templates/voiture_edit.html, app.py
+Added by agent:
+  - devis                -> quote requests made by clients (NEW TABLE — see MCD/MLD below)
 
-    ✅ 2. Search & filter on voitures list
-     Filter by: brand, model, plate, VIN (text search)
-                status chips: Tous / En Stock / Réservées / Vendues
-                type chips:   Tous types / Neuf / Occasion
-                price range:  Min / Max MAD inputs
-                year range:   De / À inputs
-     Implementation: client-side JS in templates/voitures.html
-     Réinitialiser button clears all filters at once.
-
-    ✅ 3. Client "Mes Devis" page
-     Route: /client/mes-devis
-     Shows the logged-in client's full quote history (date, vehicle, price HT/TTC, status).
-     Devis are saved to the devis table on each request.
-     Files: templates/mes_devis.html, app.py
-
-    ✅ 4. Edit & Delete clients, agents, suppliers
-     Routes: /clients/edit/<id>       /clients/delete/<id>
-             /agents/edit/<id>        /agents/delete/<id>
-             /fournisseurs/edit/<id>  /fournisseurs/delete/<id>
-     Files:  templates/client_edit.html, templates/agent_edit.html,
-             templates/fournisseur_edit.html, app.py
-
-    ✅ 5. Monthly sales chart on dashboard
-     Dashboard fetches last 12 months of sales (count + revenue per month).
-     Data passed to index.html as JSON (chart_labels, chart_ventes, chart_ca).
-     Rendered with Chart.js canvas.
-     Files: templates/index.html, app.py (dashboard route)
-
-    ✅ 6. Car detail page
-     Route: /voitures/<vin>
-     Shows full car info. Admin sees Edit / Delete buttons.
-     Files: templates/voiture_detail.html, app.py
-
-    ✅ 7. Filter cars by price range, year, and type
-     Price range: Min / Max MAD number inputs (filters as you type)
-     Year range:  De / À number inputs (filters as you type)
-     Type:        Neuf / Occasion chips
-     Reset button clears all filters at once.
-     Files: templates/voitures.html
-
-    ✅ 8. My Account page for clients
-     Route: /client/mon-compte  (GET/POST)
-     Clients can view and update their name, phone, email.
-     Files: templates/mon_compte.html, app.py
-
-    ✅ 9. Print-ready invoice (facture) after a sale
-     Route: /confirmation/<id_vente>
-     Admin is now auto-redirected here after recording a sale.
-     facture row is now inserted into the DB on every sale.
-     Files: templates/confirmation.html, app.py
-
-    ✅ 10. Flash messages (success/error feedback)
-     All add/edit/delete actions now show a coloured confirmation message.
-     Displayed in templates/base.html using Flask flash().
-     Covers: voitures, clients, agents, fournisseurs, ventes.
-
-    ✅ 11. Cancel a sale (vente_delete)
-     Route: /ventes/delete/<id_vente> (POST, admin only)
-     Cancels the sale, cascades deletes (paiement→facture→ligne_vente→vente),
-     and restores the car's status to en_stock automatically.
-     Files: app.py, templates/transactions.html
-
-    ✅ 12. Marge Brute on dashboard
-     Shows total gross profit (sum of prix_vente - prix_achat) across all sales.
-     Displayed as a stat card alongside Chiffre d'affaires.
-     Files: templates/index.html, app.py (dashboard route)
-
-    ✅ 13. Clickable VINs in Ventes & Achats
-     VIN codes in the transactions page now link to the car detail page.
-     Files: templates/transactions.html
-
-    ❌ Password hashing — NOT implemented (out of scope for local project).
-     Passwords are stored and compared as plain text. Acceptable for a local school project.
+User roles:
+  admin -> full access to everything
+  user  -> browse brands, see available cars, request a devis (quote)
 
 
-    CHANGELOG
-    ---------
-    [July 2026 — Change 1] "Nouvel Achat" button fix + purchase order flow
-    Problem: "Nouvel Achat" button in Ventes & Achats page was broken (href="#")
-    Files changed:
-      - templates/achat_add.html         (new file)
-      - templates/transactions.html      (button href fixed)
-      - app.py                           (added /achats/add route)
-    DB impact: None (schema unchanged, just inserts into existing tables)
+IMPORTANT — DATABASE CHANGES MADE BY AGENT (MCD/MLD UPDATE REQUIRED)
+----------------------------------------------------------------------
+All changes below affect your MCD and MLD. Update them accordingly.
 
-    [July 2026 — Change 2] Real car photos on brand detail page
-    Problem: Car cards showed a generic icon instead of a real photo
-    Files changed:
-      - app.py                           (marque_detail route: added m.image_url to SELECT)
-      - templates/marque_detail.html     (replaced icon with <img> tag + fallback)
-      - update_models.py                 (new migration script — run once locally)
-    DB impact: ⚠ YES — see "DATABASE CHANGES MADE BY AGENT" section above
+CHANGE A — NEW COLUMN: modele.image_url
+----------------------------------------
+Table:   modele
+Column:  image_url TEXT (nullable)
+Purpose: Stores a URL to a real car photo, shown on the brand detail page.
+How added: update_models.py migration script (run once locally)
+           + now also included in init_db() for fresh installs
 
-    [July 2026 — Change 3] Full client browsing + devis flow
-    Problem: Clients had no proper browsing experience; no quote system for them
-    Files changed:
-      - app.py                           (multiple updates — see below)
-      - templates/marques.html           (hide admin controls from clients)
-      - templates/marque_detail.html     (changed Acheter → Obtenir un Devis button)
-      - templates/devis.html             (back button now context-aware)
-    App.py changes:
-      - /marques changed from @admin_required → @login_required (clients can now access it)
-      - /marques/<id> now filters to en_stock only when role = 'user'
-      - New route added: /client/devis/<vin> (client devis, no admin needed)
-      - Login redirect for 'user' role: was /voitures → now /marques
-      - Signup redirect: was /voitures → now /marques
-    DB impact: None (reads existing data, no schema change)
+MCD impact:
+  The entity "Modele" gains one new attribute:
+    image_url : URL (facultatif / nullable)
 
-    [July 2026 — Change 4] Price range & year filters on voitures list
-    Problem: No way to filter cars by price or year
-    Files changed:
-      - templates/voitures.html          (filter UI + updated JS applyFilters function)
-    What was added:
-      - Price range inputs (Min / Max MAD) inside the filter bar
-      - Year range inputs (De / À) inside the filter bar
-      - Réinitialiser button that clears all filters at once
-      - data-prix and data-annee attributes on each <tr> row
-    App.py changes: None (purely client-side)
-    DB impact: None
-
-    [July 2026 — Change 5] Bug sweep — 11 fixes across app.py and 3 templates
-    Problems fixed:
-      BUG 1: facture table never written → Total column always "-" in Ventes & Achats
-             Fix: INSERT INTO facture on every sale in ventes_add route
-      BUG 2: ventes_add showed reservee cars in dropdown (should be en_stock only)
-             Fix: WHERE statut = 'en_stock' (was: != 'vendue')
-      BUG 3: After recording a sale, no auto-redirect to confirmation/invoice
-             Fix: redirect to confirmation/<id_vente> instead of transactions
-      BUG 4: devis table missing from init_db (crash on fresh install)
-             Fix: Added CREATE TABLE IF NOT EXISTS devis to init_db()
-      BUG 5: modele.image_url column missing from init_db (crash on fresh install)
-             Fix: Added image_url to modele CREATE TABLE + ALTER TABLE safety
-      BUG 6: /voitures/buy/<vin> ghost route (dangerous client-side sale bypass)
-             Fix: Route removed entirely
-      BUG 7: devis_select showed reservee cars
-             Fix: WHERE statut = 'en_stock' (was: != 'vendue')
-      BUG 8: No flash messages — silent success/failure on all actions
-             Fix: flash() calls added to all add/edit/delete routes;
-                  flash display block added to base.html
-      NEW:   Cancel sale route (/ventes/delete/<id_vente>)
-             Cascades deletion, restores car to en_stock
-      NEW:   Marge Brute stat card on dashboard (prix_vente - prix_achat per sale)
-      NEW:   VINs in Ventes & Achats are now clickable links to car detail page
-    Files changed:
-      - app.py                           (all route fixes, new vente_delete route)
-      - templates/base.html              (flash message display block)
-      - templates/index.html             (Marge Brute stat card)
-      - templates/transactions.html      (clickable VINs, cancel sale button)
-    DB impact: None (schema unchanged — devis and image_url already existed in live DB)
+MLD impact:
+  BEFORE: modele(id_modele, nom_modele, id_marque#)
+  AFTER:  modele(id_modele, nom_modele, id_marque#, image_url)
 
 
-    TECH STACK
-    ----------
-    Backend:  Python 3.x, Flask, SQLite (via sqlite3 module)
-    Frontend: Jinja2 templates, custom CSS (Inter font, Boxicons icons)
-    Auth:     Session-based (Flask sessions), role-based (admin/user)
-    Build:    Was previously compiled to .exe with PyInstaller (no longer needed)
-    Packages: Flask, and others listed in requirements.txt
+CHANGE B — NEW TABLE: devis
+-----------------------------
+Table:   devis
+Purpose: Records every quote (devis) a client requests for a specific car.
+         Clients see their history on the "Mes Devis" page.
+         Admins can also generate quotes via the Devis menu.
+
+Full schema:
+  devis(
+    id_devis   INTEGER  PRIMARY KEY AUTOINCREMENT,
+    vin        TEXT     NOT NULL,    -- references voiture.vin
+    id_client  INTEGER  NOT NULL,    -- references client.id_client
+    date_devis DATE,
+    prix_vente REAL,                 -- car sell price at time of quote
+    devis_num  TEXT                  -- readable quote number, e.g. 20260718-XXXX
+  )
+  Foreign keys:
+    vin        -> voiture(vin)
+    id_client  -> client(id_client)
+
+How added: table existed in live database.db before Change 5;
+           formally added to init_db() in Change 5 (safe on fresh installs now)
+
+MCD impact:
+  NEW ENTITY: Devis
+    Attributes: id_devis (PK), date_devis, prix_vente, devis_num
+
+  NEW ASSOCIATIONS:
+    Client  (1,1) ---< demande  >--- (0,n) Devis
+    Voiture (1,1) ---< concerne >--- (0,n) Devis
+
+  Reading:
+    - A Client can make zero or many Devis (0,n)
+    - A Devis belongs to exactly one Client (1,1)
+    - A Voiture can be referenced in zero or many Devis (0,n)
+    - A Devis concerns exactly one Voiture (1,1)
+
+MLD impact:
+  NEW RELATION:
+    devis(id_devis, date_devis, prix_vente, devis_num, vin#, id_client#)
+
+  Foreign keys:
+    vin#       -> voiture(vin)
+    id_client# -> client(id_client)
 
 
-    AGENT NOTES
-    -----------
-    - Always use Command Prompt (cmd), NOT PowerShell — venv activation is blocked in PowerShell on this machine
-    - Database path in app.py is dynamic: resolves to same folder as app.py
-    - GitHub token needs to be provided by user for pushes (PAT tokens expire)
-    - The app auto-opens the browser on startup (webbrowser module in app.py)
-    - Moroccan license plate format is validated in the voitures_add form
-    - update_models.py must be run locally to apply DB changes (image_url column + new models)
-    - MCD/MLD need updating to reflect image_url column on the modele table
-    - All voitures.html filters are client-side JS — no Flask route changes needed for filtering
-    - facture table is now written on every sale (was never written before Change 5)
-    - vente_delete cascades in order: paiement → facture → ligne_vente → vente (then car → en_stock)
-    - init_db now includes devis table and image_url on modele — safe on fresh install
-    ====================================================
-    
+CHANGE C — DATA ONLY: 24 new rows in modele (no schema change)
+---------------------------------------------------------------
+The agent inserted 3 extra models per brand into the existing modele table.
+  Original count: 19 models across 8 brands
+  After:          43 models across 8 brands
+
+  New models per brand:
+  +----------------+------------------------------------------+
+  | Brand          | New Models Added                         |
+  +----------------+------------------------------------------+
+  | Mercedes-Benz  | EQS 580 4MATIC, Classe C 300d, GLC 300  |
+  | BMW            | M5 G90, i7 xDrive60, X5 M Competition   |
+  | Audi           | R8 V10 Plus, e-tron GT RS, SQ8 TFSI     |
+  | Porsche        | Taycan Turbo S, Macan GTS, 718 Spyder RS |
+  | Ferrari        | SF90 XX Stradale, 296 GTB, Roma Spider   |
+  | Lamborghini    | Revuelto, Urus SE, Huracán Sterrato      |
+  | Bentley        | Continental GT Speed, Bentayga EWB, Flying Spur S |
+  | Rolls-Royce    | Spectre, Ghost Black Badge, Cullinan Series II |
+  +----------------+------------------------------------------+
+  MCD/MLD impact: NONE (data insert only, no schema change)
+
+
+FEATURES IMPLEMENTED
+--------------------
+This is the authoritative list of what the app can and cannot do.
+
+[OK] 1. Edit & Delete cars
+   Routes: /voitures/edit/<vin>  (GET/POST), /voitures/delete/<vin> (POST)
+   Files:  templates/voiture_edit.html, app.py
+
+[OK] 2. Search & filter on voitures list
+   - Text search: brand, model, plate, VIN
+   - Status chips: Tous / En Stock / Reservees / Vendues
+   - Type chips: Tous types / Neuf / Occasion
+   - Price range: Min / Max MAD (live, as you type)
+   - Year range: De / A (live, as you type)
+   - Reset button clears all filters at once
+   100% client-side JS — no backend or DB changes needed
+   File: templates/voitures.html
+
+[OK] 3. Client "Mes Devis" page
+   Route: /client/mes-devis
+   Shows client's full quote history. Each request saves a row to the devis table.
+   Files: templates/mes_devis.html, app.py
+
+[OK] 4. Edit & Delete clients, agents, suppliers
+   Routes: /clients/edit/<id>, /clients/delete/<id>
+           /agents/edit/<id>, /agents/delete/<id>
+           /fournisseurs/edit/<id>, /fournisseurs/delete/<id>
+   Files: templates/client_edit.html, agent_edit.html, fournisseur_edit.html, app.py
+
+[OK] 5. Monthly sales chart on dashboard
+   Last 12 months fetched and passed as JSON to Chart.js (count + revenue per month).
+   Files: templates/index.html, app.py
+
+[OK] 6. Car detail page
+   Route: /voitures/<vin> — full car info, Edit/Delete for admin.
+   Files: templates/voiture_detail.html, app.py
+
+[OK] 7. Filters by price range, year, type — see Feature 2.
+
+[OK] 8. My Account page for clients
+   Route: /client/mon-compte (GET/POST) — view and update name, phone, email.
+   Files: templates/mon_compte.html, app.py
+
+[OK] 9. Invoice (facture) after sale
+   Route: /confirmation/<id_vente>
+   Admin is auto-redirected here after recording a sale.
+   A facture row is inserted into the DB on every sale (was broken before Change 5).
+   Files: templates/confirmation.html, app.py
+
+[OK] 10. Flash messages — feedback on every action
+    Coloured success/error banners after every add/edit/delete action.
+    Files: templates/base.html (display block), app.py (flash() calls on all routes)
+
+[OK] 11. Cancel a sale (vente_delete)
+    Route: /ventes/delete/<id_vente> (POST, admin only)
+    Cascades: paiement -> facture -> ligne_vente -> vente, then car status -> en_stock.
+    Files: app.py, templates/transactions.html
+
+[OK] 12. Marge Brute on dashboard
+    Gross profit card: sum of (prix_vente - prix_achat) across all completed sales.
+    Files: templates/index.html, app.py
+
+[OK] 13. Clickable VINs in Ventes & Achats
+    VIN codes in the transactions page link directly to the car detail page.
+    File: templates/transactions.html
+
+[NO] Password hashing — NOT implemented. Out of scope for local school project.
+     Passwords stored and compared as plain text (acceptable locally).
+
+
+CHANGELOG
+---------
+[July 2026 — Change 1] Nouvel Achat button fix + purchase order flow
+  Problem: The "Nouvel Achat" button was broken (href="#"), clicking it did nothing.
+  Files: templates/achat_add.html (new), templates/transactions.html (href fixed), app.py
+  DB impact: None
+
+[July 2026 — Change 2] Real car photos on brand detail page
+  Problem: Car cards showed a generic placeholder icon instead of a real photo.
+  Files: app.py (marque_detail SELECT), templates/marque_detail.html, update_models.py (new)
+  DB impact: NEW COLUMN modele.image_url — see CHANGE A above
+
+[July 2026 — Change 3] Full client browsing + devis flow
+  Problem: Clients had no browsing experience and no quote system.
+  Files: app.py, templates/marques.html, marque_detail.html, devis.html
+  Key app.py changes:
+    - /marques: changed from @admin_required to @login_required
+    - /marques/<id>: returns only en_stock cars when role = user
+    - New routes: /client/devis/<vin>, /client/mes-devis, /client/mon-compte
+    - Login/signup redirect for user role: /voitures -> /marques
+  DB impact: NEW TABLE devis — see CHANGE B above
+
+[July 2026 — Change 4] Price range & year filters on voitures list
+  Problem: No way to filter cars by price or year on the voitures page.
+  Files: templates/voitures.html (filter UI + JS applyFilters rewrite)
+  DB impact: None (purely client-side)
+
+[July 2026 — Change 5] Bug sweep — 11 fixes + 3 improvements
+  Bugs fixed:
+    - facture never written -> Total column always "-" -> now inserted on every sale
+    - ventes_add and devis_select showed reservee cars -> fixed to en_stock only
+    - No auto-redirect to invoice after sale -> now redirects to confirmation/<id_vente>
+    - devis table missing from init_db -> crash on fresh install -> added to init_db
+    - image_url missing from init_db -> crash on fresh install -> added + ALTER TABLE safety
+    - Ghost route /voitures/buy/<vin> let clients bypass admin to create sales -> removed
+    - No feedback on any action (silent success/fail) -> flash() added everywhere
+  Improvements:
+    - Cancel sale route: /ventes/delete/<id_vente> (cascades cleanly, restores car status)
+    - Marge Brute stat card on dashboard
+    - Clickable VINs in Ventes & Achats -> car detail page
+  Files: app.py, templates/base.html, templates/index.html, templates/transactions.html
+  DB impact: None (devis table and image_url already existed in the live database.db)
+
+
+TECH STACK
+----------
+Backend:  Python 3.x, Flask, SQLite (via sqlite3 module)
+Frontend: Jinja2 templates, custom CSS (Inter font, Boxicons icons)
+Auth:     Session-based (Flask sessions), role-based (admin / user)
+Packages: Flask, and others listed in requirements.txt
+
+
+AGENT NOTES
+-----------
+- Use Command Prompt (cmd), NOT PowerShell — venv activation fails in PowerShell on this machine
+- Database path in app.py is dynamic: always resolves to the same folder as app.py
+- GitHub PAT token must be provided by the user each session (tokens expire)
+- The app auto-opens the browser on startup via the webbrowser module
+- Moroccan licence plate format is server-validated in voitures_add (regex)
+- update_models.py must be run locally once to populate image_url data for existing rows
+- MCD/MLD need updating for CHANGE A (modele.image_url) and CHANGE B (devis table)
+- facture is now written on every sale — Total column in Ventes & Achats is live
+- vente_delete cascade order: paiement -> facture -> ligne_vente -> vente, then car -> en_stock
+- init_db is now safe for fresh installs: includes devis table + image_url on modele
+====================================================
