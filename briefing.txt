@@ -35,7 +35,7 @@ HOW TO RUN
 
 DATABASE
 --------
-File: database.db (located in the root project folder, 84 Ko)
+File: database.db (located in the root project folder)
 Full path: C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\database.db
 Engine: SQLite
 Viewer tool: DB Browser for SQLite (sqlitebrowser.org) — open database.db to browse/edit data
@@ -48,7 +48,7 @@ is saved here instantly.
 DATABASE SCHEMA (tables)
 ------------------------
 - marque          → car brands
-- modele          → car models (linked to marque)
+- modele          → car models (linked to marque)  ← MODIFIED (see below)
 - voiture         → cars (VIN, model, type, plate, year, buy price, sell price, status)
 - client          → customers
 - fournisseur     → suppliers
@@ -64,28 +64,80 @@ DATABASE SCHEMA (tables)
 
 User roles:
   admin → full access to everything
-  user  → can only browse cars and buy them
+  user  → browse all brands, see available cars, request a devis (quote)
+
+
+⚠ DATABASE CHANGES MADE BY AGENT (IMPORTANT FOR MCD/MLD)
+----------------------------------------------------------
+The following changes were made to the database structure and data.
+These changes affect your MCD (Modèle Conceptuel de Données) and MLD
+(Modèle Logique de Données) — update them accordingly.
+
+1. NEW COLUMN ADDED: modele.image_url
+   Table:  modele
+   Column: image_url TEXT (nullable)
+   Purpose: Stores a URL to a real car photo, displayed on the brand detail page.
+   MCD impact: The "Modèle" entity now has an additional attribute: image_url (URL)
+   MLD impact: modele(id_modele, nom_modele, id_marque, image_url)
+               was: modele(id_modele, nom_modele, id_marque)
+
+2. NEW MODELS INSERTED (24 new rows in the modele table)
+   The original seed data had 19 models across 8 brands.
+   The agent added 3 new models per brand = 24 additional models.
+   Total after update: 43 models.
+
+   New models added per brand:
+   ┌────────────────┬──────────────────────────────────────────┐
+   │ Brand          │ New Models Added                         │
+   ├────────────────┼──────────────────────────────────────────┤
+   │ Mercedes-Benz  │ EQS 580 4MATIC, Classe C 300d, GLC 300  │
+   │ BMW            │ M5 G90, i7 xDrive60, X5 M Competition   │
+   │ Audi           │ R8 V10 Plus, e-tron GT RS, SQ8 TFSI     │
+   │ Porsche        │ Taycan Turbo S, Macan GTS, 718 Spyder RS │
+   │ Ferrari        │ Purosangue, 296 GTB, F8 Tributo          │
+   │ Lamborghini    │ Revuelto, Sterrato, Urus S               │
+   │ Range Rover    │ Range Rover Sport SV, Velar R-Dynamic SE,│
+   │                │ Discovery P360                           │
+   │ Maserati       │ MC20, GranTurismo Folgore, Levante Trofeo│
+   └────────────────┴──────────────────────────────────────────┘
+
+   Note: These are MODEL entries (in the modele table) only.
+   They are NOT voitures — no cars have been added to the inventory.
+   A model is just a catalog entry; a voiture is a real car with VIN, plate, price, etc.
+
+HOW TO APPLY THE DATABASE CHANGES TO YOUR LOCAL FILE:
+  Run this ONE time in cmd (with venv active):
+    python update_models.py
+  This script: adds the image_url column, sets photos for existing models,
+  and inserts the 24 new model entries. It is safe to run multiple times.
 
 
 APP PAGES (routes in app.py)
 -----------------------------
-/                   → Dashboard (stats: cars, sales, clients)
-/voitures           → Car inventory list
-/voitures/add       → Add a new car
-/voitures/buy/<vin> → Buy a car (user role only)
-/clients            → Client management (CRUD)
-/agents             → Agent management (CRUD)
-/fournisseurs       → Supplier management (CRUD)
-/marques            → Brand management + model management
-/marque/<id>        → Brand detail page (models for that brand)
-/transactions       → Sales & purchases history
-/ventes/add         → Record a new sale
-/achats/add         → Record a new purchase (ADDED July 2026)
-/devis/select       → Select car for quote
-/devis/<vin>/<id>   → Generate invoice/quote (PDF-ready)
-/confirmation/<id>  → Bon de confirmation for a sale
-/login              → Login page
-/signup             → Signup page
+ADMIN ROUTES (require admin login):
+  /                   → Dashboard (stats: cars, sales, clients)
+  /voitures/add       → Add a new car
+  /clients            → Client management (CRUD)
+  /agents             → Agent management (CRUD)
+  /fournisseurs       → Supplier management (CRUD)
+  /transactions       → Sales & purchases history
+  /ventes/add         → Record a new sale
+  /achats/add         → Record a new purchase
+  /devis/select       → Select car + client for a quote
+  /devis/<vin>/<id>   → Generate quote (PDF-ready, admin version)
+  /confirmation/<id>  → Bon de confirmation for a sale
+
+SHARED ROUTES (admin + client):
+  /voitures           → Car inventory list (all cars for admin, available only for client)
+  /marques            → Brands page (admin sees Add button; client sees brands only)
+  /marques/<id>       → Brand detail — admin sees all cars; client sees en_stock only
+  /login              → Login page
+  /signup             → Signup page (creates client account)
+
+CLIENT-ONLY ROUTES:
+  /client/devis/<vin> → Generates a printable devis (quote) for that car,
+                        using the logged-in client's info automatically.
+                        Does NOT finalize the sale — it is just a quote document.
 
 
 ESSENTIAL FILES (keep these)
@@ -94,7 +146,8 @@ app.py              → Main Flask application — all routes and logic
 database.db         → The SQLite database — all data lives here
 requirements.txt    → Python package dependencies
 schema.sql          → SQL to recreate all tables from scratch (backup)
-seed_data.py        → Seeds test data into the database (8 brands, 19 cars, 10 clients, etc.)
+seed_data.py        → Seeds test data into the database
+update_models.py    → Migration script (run once): adds image_url column + new models
 templates/          → All HTML pages (Jinja2 templates)
 static/             → CSS (style.css) + brand SVG logos folder
 venv/               → Python virtual environment with all installed packages
@@ -117,8 +170,6 @@ LuxeDrive_Application_v6.exe    → Old compiled version v6
 LuxeDrive_Application_v7.exe    → Old compiled version v7
 LuxeDrive_Application_v8.exe    → Old compiled version v8
 LuxeDrive_Application_v9.exe    → Old compiled version v9
-  → All .exe files are old compiled desktop builds. Since you're running
-    with Python directly, none of these are needed.
 
 
 GITHUB SITUATION
@@ -134,23 +185,39 @@ To apply GitHub changes to the local folder: manually copy the changed files
 than what's tracked in git).
 
 
-CHANGES MADE (July 18, 2026)
------------------------------
-Problem: "Nouvel Achat" button in Ventes & Achats page was broken (href="#")
-Fix applied:
-  1. Created templates/achat_add.html
-     → New form: date d'achat, fournisseur, marque (brand filter), voiture (VIN)
-     → Selecting a brand dynamically filters the voiture dropdown via JavaScript
-     → On submit: inserts into commande_achat + ligne_achat tables
-  2. Updated templates/transactions.html
-     → Fixed button: href="#" → href="{{ url_for('achats_add') }}"
-  3. Updated app.py
-     → Added /achats/add route (GET + POST) with @admin_required decorator
+CHANGES LOG
+-----------
 
-To apply these to your local folder:
-  - Copy achat_add.html into your templates/ folder
-  - In your local transactions.html, change href="#" to href="{{ url_for('achats_add') }}"
-  - In your local app.py, paste the achats_add() route after the ventes_add() function
+[July 2026 — Change 1] Fix "Nouvel Achat" button
+  Problem: "Nouvel Achat" button in Ventes & Achats page was broken (href="#")
+  Files changed:
+    - templates/achat_add.html         (new file)
+    - templates/transactions.html      (button href fixed)
+    - app.py                           (added /achats/add route)
+  DB impact: None (schema unchanged, just inserts into existing tables)
+
+[July 2026 — Change 2] Real car photos on brand detail page
+  Problem: Car cards showed a generic icon instead of a real photo
+  Files changed:
+    - app.py                           (marque_detail route: added m.image_url to SELECT)
+    - templates/marque_detail.html     (replaced icon with <img> tag + fallback)
+    - update_models.py                 (new migration script — run once locally)
+  DB impact: ⚠ YES — see "DATABASE CHANGES MADE BY AGENT" section above
+
+[July 2026 — Change 3] Full client browsing + devis flow
+  Problem: Clients had no proper browsing experience; no quote system for them
+  Files changed:
+    - app.py                           (multiple updates — see below)
+    - templates/marques.html           (hide admin controls from clients)
+    - templates/marque_detail.html     (changed Acheter → Obtenir un Devis button)
+    - templates/devis.html             (back button now context-aware)
+  App.py changes:
+    - /marques changed from @admin_required → @login_required (clients can now access it)
+    - /marques/<id> now filters to en_stock only when role = 'user'
+    - New route added: /client/devis/<vin> (client devis, no admin needed)
+    - Login redirect for 'user' role: was /voitures → now /marques
+    - Signup redirect: was /voitures → now /marques
+  DB impact: None (reads existing data, no schema change)
 
 
 TECH STACK
@@ -169,4 +236,6 @@ AGENT NOTES
 - GitHub token needs to be provided by user for pushes (PAT tokens expire)
 - The app auto-opens the browser on startup (webbrowser module in app.py)
 - Moroccan license plate format is validated in the voitures_add form
+- update_models.py must be run locally to apply DB changes (image_url column + new models)
+- MCD/MLD need updating to reflect image_url column on the modele table
 ====================================================
