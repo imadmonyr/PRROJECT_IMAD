@@ -156,6 +156,12 @@
             <input type="text" name="prenom" value="{{ client.prenom or '' }}" placeholder="Prénom" required>
           </div>
         </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>CIN</label>
+            <input type="text" name="cin" value="{{ client.cin or '' }}" placeholder="AB123456">
+          </div>
+        </div>
 
         <div class="section-label" style="margin-top: 22px;">
           <i class='bx bx-phone'></i> Coordonnées

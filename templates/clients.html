@@ -271,6 +271,10 @@
           <input type="text" name="prenom" placeholder="Prénom" required>
         </div>
         <div class="form-group">
+          <label>CIN</label>
+          <input type="text" name="cin" placeholder="AB123456">
+        </div>
+        <div class="form-group">
           <label>Téléphone</label>
           <input type="text" name="telephone" placeholder="0600000000">
         </div>
@@ -294,37 +298,54 @@
 <!-- Table -->
 <div class="table-wrapper">
   <table id="clientsTable">
+    <colgroup>
+      <col style="width:22%;">
+      <col style="width:11%;">
+      <col style="width:20%;">
+      <col style="width:20%;">
+      <col style="width:9%;">
+      <col style="width:11%;">
+      <col style="width:7%;">
+    </colgroup>
     <thead>
       <tr>
-        <th>#</th>
         <th>Client</th>
-        <th>Téléphone</th>
-        <th>Email</th>
+        <th>CIN</th>
+        <th>Contact</th>
         <th>Adresse</th>
-        <th>Achats</th>
-        <th>Total dépensé</th>
-        <th>Actions</th>
+        <th style="text-align:center;">Achats</th>
+        <th style="text-align:right;">Total dépensé</th>
+        <th style="text-align:center;">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% if clients %}
         {% for c in clients %}
         <tr class="client-row">
-          <td class="td-id">{{ c.id_client }}</td>
-          <td class="td-name">
-            {{ c.nom }} {{ c.prenom }}
-          </td>
-          <td class="td-phone">{{ c.telephone or '—' }}</td>
-          <td class="td-email">{{ c.email or '—' }}</td>
-          <td class="td-address">{{ c.adresse or '—' }}</td>
           <td>
+            <div class="td-name">{{ c.nom }} {{ c.prenom }}</div>
+          </td>
+          <td>
+            {% if c.cin %}
+              <span style="display:inline-block;font-family:'Courier New',monospace;font-size:0.75rem;color:#888;background:#141414;border:1px solid #222;border-radius:4px;padding:2px 7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.cin }}</span>
+            {% else %}
+              <span style="color:#444;font-size:0.8rem;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if c.telephone %}<div class="td-phone">{{ c.telephone }}</div>{% endif %}
+            {% if c.email %}<div class="td-email" style="margin-top:2px;">{{ c.email }}</div>{% endif %}
+            {% if not c.telephone and not c.email %}<span style="color:#444;font-size:0.8rem;">—</span>{% endif %}
+          </td>
+          <td class="td-address">{{ c.adresse or '—' }}</td>
+          <td style="text-align:center;">
             {% if c.nb_achats and c.nb_achats > 0 %}
               <span class="td-badge blue"><i class='bx bx-car'></i> {{ c.nb_achats }}</span>
             {% else %}
               <span style="color:#333; font-size:0.8rem;">—</span>
             {% endif %}
           </td>
-          <td class="td-total">
+          <td class="td-total" style="text-align:right;">
             {% if c.total_depense and c.total_depense > 0 %}
               {{ "{:,.0f}".format(c.total_depense) }} MAD
             {% else %}
@@ -332,7 +353,7 @@
             {% endif %}
           </td>
           <td>
-            <div class="actions">
+            <div class="actions" style="justify-content:center;">
               <a href="/clients/edit/{{ c.id_client }}" class="btn-icon edit" title="Modifier">
                 <i class='bx bx-edit'></i>
               </a>
@@ -348,14 +369,14 @@
         {% endfor %}
       {% else %}
         <tr class="empty-row">
-          <td colspan="8">
+          <td colspan="7">
             <i class='bx bx-user-x'></i>
             Aucun client enregistré
           </td>
         </tr>
       {% endif %}
       <tr class="no-results" id="noResults">
-        <td colspan="8" style="text-align:center; padding:40px; color:#444;">
+        <td colspan="7" style="text-align:center; padding:40px; color:#444;">
           <i class='bx bx-search-alt' style="font-size:2rem; display:block; margin-bottom:8px; color:#2a2a2a;"></i>
           Aucun résultat pour cette recherche
         </td>

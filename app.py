@@ -179,6 +179,7 @@ def init_db():
     except Exception:
         pass  # Column already exists — safe to ignore
     for _a_col in [
+        "ALTER TABLE client ADD COLUMN cin    TEXT",
         "ALTER TABLE agent ADD COLUMN cin     TEXT",
         "ALTER TABLE agent ADD COLUMN adresse TEXT",
         "ALTER TABLE agent ADD COLUMN statut  TEXT DEFAULT 'Actif'",
@@ -512,9 +513,10 @@ def clients():
         telephone = request.form['telephone']
         email     = request.form['email']
         adresse   = request.form.get('adresse', '')
+        cin       = request.form.get('cin', '')
         cur.execute(
-            'INSERT INTO client (nom, prenom, telephone, email, adresse) VALUES (?, ?, ?, ?, ?)',
-            (nom, prenom, telephone, email, adresse)
+            'INSERT INTO client (nom, prenom, telephone, email, adresse, cin) VALUES (?, ?, ?, ?, ?, ?)',
+            (nom, prenom, telephone, email, adresse, cin)
         )
         db.commit()
         flash('Client ajouté avec succès.', 'success')
@@ -546,13 +548,14 @@ def client_edit(id_client):
     cur = db.cursor()
     if request.method == 'POST':
         cur.execute(
-            'UPDATE client SET nom=?, prenom=?, telephone=?, email=?, adresse=? WHERE id_client=?',
+            'UPDATE client SET nom=?, prenom=?, telephone=?, email=?, adresse=?, cin=? WHERE id_client=?',
             (
                 request.form['nom'],
                 request.form['prenom'],
                 request.form['telephone'],
                 request.form['email'],
                 request.form.get('adresse', ''),
+                request.form.get('cin', ''),
                 id_client,
             )
         )
