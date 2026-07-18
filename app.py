@@ -174,6 +174,14 @@ def init_db():
         db.execute("ALTER TABLE modele ADD COLUMN image_url TEXT")
     except Exception:
         pass  # Column already exists — safe to ignore
+    try:
+        db.execute("ALTER TABLE client ADD COLUMN adresse TEXT")
+    except Exception:
+        pass  # Column already exists — safe to ignore
+    try:
+        db.execute("ALTER TABLE fournisseur ADD COLUMN email TEXT")
+    except Exception:
+        pass  # Column already exists — safe to ignore
     db.commit()
     # Seed the default admin account if not present
     existing = db.execute("SELECT id_user FROM user WHERE username = 'admin'").fetchone()
@@ -468,15 +476,35 @@ def clients():
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        nom = request.form['nom']
-        prenom = request.form['prenom']
+        nom       = request.form['nom']
+        prenom    = request.form['prenom']
         telephone = request.form['telephone']
-        email = request.form['email']
-        cur.execute('INSERT INTO client (nom, prenom, telephone, email) VALUES (?, ?, ?, ?)', (nom, prenom, telephone, email))
+        email     = request.form['email']
+        adresse   = request.form.get('adresse', '')
+        cur.execute(
+            'INSERT INTO client (nom, prenom, telephone, email, adresse) VALUES (?, ?, ?, ?, ?)',
+            (nom, prenom, telephone, email, adresse)
+        )
         db.commit()
+        flash('Client ajouté avec succès.', 'success')
         return redirect(url_for('clients'))
-        
-    cur.execute('SELECT * FROM client')
+
+    cur.execute('''
+        SELECT
+            c.id_client,
+            c.nom,
+            c.prenom,
+            c.telephone,
+            c.email,
+            c.adresse,
+            COUNT(DISTINCT v.id_vente)      AS nb_achats,
+            COALESCE(SUM(f.total), 0)       AS total_depense
+        FROM client c
+        LEFT JOIN vente v    ON c.id_client = v.id_client
+        LEFT JOIN facture f  ON v.id_vente  = f.id_vente
+        GROUP BY c.id_client
+        ORDER BY c.nom, c.prenom
+    ''')
     clients_list = cur.fetchall()
     return render_template('clients.html', clients=clients_list)
 
@@ -486,9 +514,17 @@ def client_edit(id_client):
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        cur.execute('UPDATE client SET nom=?,prenom=?,telephone=?,email=? WHERE id_client=?',
-                    (request.form['nom'], request.form['prenom'],
-                     request.form['telephone'], request.form['email'], id_client))
+        cur.execute(
+            'UPDATE client SET nom=?, prenom=?, telephone=?, email=?, adresse=? WHERE id_client=?',
+            (
+                request.form['nom'],
+                request.form['prenom'],
+                request.form['telephone'],
+                request.form['email'],
+                request.form.get('adresse', ''),
+                id_client,
+            )
+        )
         db.commit()
         flash('Client modifié avec succès.', 'success')
         return redirect(url_for('clients'))
@@ -511,14 +547,31 @@ def fournisseurs():
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        nom = request.form['nom']
-        adresse = request.form['adresse']
+        nom       = request.form['nom']
+        adresse   = request.form.get('adresse', '')
         telephone = request.form['telephone']
-        cur.execute('INSERT INTO fournisseur (nom, adresse, telephone) VALUES (?, ?, ?)', (nom, adresse, telephone))
+        email     = request.form.get('email', '')
+        cur.execute(
+            'INSERT INTO fournisseur (nom, adresse, telephone, email) VALUES (?, ?, ?, ?)',
+            (nom, adresse, telephone, email)
+        )
         db.commit()
+        flash('Fournisseur ajouté avec succès.', 'success')
         return redirect(url_for('fournisseurs'))
-        
-    cur.execute('SELECT * FROM fournisseur')
+
+    cur.execute('''
+        SELECT
+            f.id_fournisseur,
+            f.nom,
+            f.adresse,
+            f.telephone,
+            f.email,
+            COUNT(ca.id_cmdA) AS nb_commandes
+        FROM fournisseur f
+        LEFT JOIN commande_achat ca ON f.id_fournisseur = ca.id_fournisseur
+        GROUP BY f.id_fournisseur
+        ORDER BY f.nom
+    ''')
     fournisseurs_list = cur.fetchall()
     return render_template('fournisseurs.html', fournisseurs=fournisseurs_list)
 
@@ -528,9 +581,16 @@ def fournisseur_edit(id_fournisseur):
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        cur.execute('UPDATE fournisseur SET nom=?,adresse=?,telephone=? WHERE id_fournisseur=?',
-                    (request.form['nom'], request.form['adresse'],
-                     request.form['telephone'], id_fournisseur))
+        cur.execute(
+            'UPDATE fournisseur SET nom=?, adresse=?, telephone=?, email=? WHERE id_fournisseur=?',
+            (
+                request.form['nom'],
+                request.form.get('adresse', ''),
+                request.form['telephone'],
+                request.form.get('email', ''),
+                id_fournisseur,
+            )
+        )
         db.commit()
         flash('Fournisseur modifié avec succès.', 'success')
         return redirect(url_for('fournisseurs'))
