@@ -182,6 +182,28 @@ def init_db():
         db.execute("ALTER TABLE fournisseur ADD COLUMN email TEXT")
     except Exception:
         pass  # Column already exists — safe to ignore
+    for _col_sql in [
+        "ALTER TABLE fournisseur ADD COLUMN ice               TEXT",
+        "ALTER TABLE fournisseur ADD COLUMN pays              TEXT",
+        "ALTER TABLE fournisseur ADD COLUMN delai_livraison   TEXT",
+        "ALTER TABLE fournisseur ADD COLUMN contact_personnel TEXT",
+    ]:
+        try:
+            db.execute(_col_sql)
+        except Exception:
+            pass
+    db.executescript('''
+        CREATE TABLE IF NOT EXISTS fournisseur_marque (
+            id_fournisseur INTEGER NOT NULL,
+            id_marque      INTEGER NOT NULL,
+            PRIMARY KEY (id_fournisseur, id_marque)
+        );
+        CREATE TABLE IF NOT EXISTS fournisseur_modele (
+            id_fournisseur INTEGER NOT NULL,
+            id_modele      INTEGER NOT NULL,
+            PRIMARY KEY (id_fournisseur, id_modele)
+        );
+    ''')
     db.commit()
     # Seed the default admin account if not present
     existing = db.execute("SELECT id_user FROM user WHERE username = 'admin'").fetchone()
@@ -547,33 +569,69 @@ def fournisseurs():
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        nom       = request.form['nom']
-        adresse   = request.form.get('adresse', '')
-        telephone = request.form['telephone']
-        email     = request.form.get('email', '')
+        nom               = request.form['nom']
+        adresse           = request.form.get('adresse', '')
+        telephone         = request.form['telephone']
+        email             = request.form.get('email', '')
+        ice               = request.form.get('ice', '')
+        pays              = request.form.get('pays', '')
+        delai_livraison   = request.form.get('delai_livraison', '')
+        contact_personnel = request.form.get('contact_personnel', '')
         cur.execute(
-            'INSERT INTO fournisseur (nom, adresse, telephone, email) VALUES (?, ?, ?, ?)',
-            (nom, adresse, telephone, email)
+            '''INSERT INTO fournisseur
+               (nom, adresse, telephone, email, ice, pays, delai_livraison, contact_personnel)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (nom, adresse, telephone, email, ice, pays, delai_livraison, contact_personnel)
         )
+        new_id = cur.lastrowid
+        # Save marque associations
+        for id_marque in request.form.getlist('marques'):
+            try:
+                cur.execute('INSERT INTO fournisseur_marque (id_fournisseur, id_marque) VALUES (?, ?)',
+                            (new_id, int(id_marque)))
+            except Exception:
+                pass
+        # Save modele associations
+        for id_modele in request.form.getlist('modeles'):
+            try:
+                cur.execute('INSERT INTO fournisseur_modele (id_fournisseur, id_modele) VALUES (?, ?)',
+                            (new_id, int(id_modele)))
+            except Exception:
+                pass
         db.commit()
         flash('Fournisseur ajouté avec succès.', 'success')
         return redirect(url_for('fournisseurs'))
 
+    # Enriched list with nb_commandes and marques supplied (GROUP_CONCAT)
     cur.execute('''
         SELECT
-            f.id_fournisseur,
-            f.nom,
-            f.adresse,
-            f.telephone,
-            f.email,
-            COUNT(ca.id_cmdA) AS nb_commandes
+            f.id_fournisseur, f.nom, f.adresse, f.telephone, f.email,
+            f.ice, f.pays, f.delai_livraison, f.contact_personnel,
+            COUNT(DISTINCT ca.id_cmdA)          AS nb_commandes,
+            GROUP_CONCAT(DISTINCT mq.nom_marque) AS marques_fournies
         FROM fournisseur f
-        LEFT JOIN commande_achat ca ON f.id_fournisseur = ca.id_fournisseur
+        LEFT JOIN commande_achat   ca ON f.id_fournisseur = ca.id_fournisseur
+        LEFT JOIN fournisseur_marque fm ON f.id_fournisseur = fm.id_fournisseur
+        LEFT JOIN marque            mq ON fm.id_marque = mq.id_marque
         GROUP BY f.id_fournisseur
         ORDER BY f.nom
     ''')
     fournisseurs_list = cur.fetchall()
-    return render_template('fournisseurs.html', fournisseurs=fournisseurs_list)
+    # Distinct marques (deduped by name) for the Add form
+    cur.execute('SELECT MIN(id_marque) as id_marque, nom_marque FROM marque GROUP BY nom_marque ORDER BY nom_marque')
+    marques_list = cur.fetchall()
+    # All modeles with their marque_id
+    cur.execute('''
+        SELECT m.id_modele, m.nom_modele, m.id_marque, mq.nom_marque
+        FROM modele m JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE m.id_marque IN (SELECT MIN(id_marque) FROM marque GROUP BY nom_marque)
+        ORDER BY mq.nom_marque, m.nom_modele
+    ''')
+    modeles_list = cur.fetchall()
+    return render_template('fournisseurs.html',
+                           fournisseurs=fournisseurs_list,
+                           marques=marques_list,
+                           modeles=modeles_list)
 
 @app.route('/fournisseurs/edit/<int:id_fournisseur>', methods=['GET', 'POST'])
 @admin_required
@@ -582,26 +640,74 @@ def fournisseur_edit(id_fournisseur):
     cur = db.cursor()
     if request.method == 'POST':
         cur.execute(
-            'UPDATE fournisseur SET nom=?, adresse=?, telephone=?, email=? WHERE id_fournisseur=?',
+            '''UPDATE fournisseur
+               SET nom=?, adresse=?, telephone=?, email=?,
+                   ice=?, pays=?, delai_livraison=?, contact_personnel=?
+               WHERE id_fournisseur=?''',
             (
                 request.form['nom'],
                 request.form.get('adresse', ''),
                 request.form['telephone'],
                 request.form.get('email', ''),
+                request.form.get('ice', ''),
+                request.form.get('pays', ''),
+                request.form.get('delai_livraison', ''),
+                request.form.get('contact_personnel', ''),
                 id_fournisseur,
             )
         )
+        # Reset and re-save marque associations
+        cur.execute('DELETE FROM fournisseur_marque WHERE id_fournisseur=?', (id_fournisseur,))
+        for id_marque in request.form.getlist('marques'):
+            try:
+                cur.execute('INSERT INTO fournisseur_marque (id_fournisseur, id_marque) VALUES (?, ?)',
+                            (id_fournisseur, int(id_marque)))
+            except Exception:
+                pass
+        # Reset and re-save modele associations
+        cur.execute('DELETE FROM fournisseur_modele WHERE id_fournisseur=?', (id_fournisseur,))
+        for id_modele in request.form.getlist('modeles'):
+            try:
+                cur.execute('INSERT INTO fournisseur_modele (id_fournisseur, id_modele) VALUES (?, ?)',
+                            (id_fournisseur, int(id_modele)))
+            except Exception:
+                pass
         db.commit()
         flash('Fournisseur modifié avec succès.', 'success')
         return redirect(url_for('fournisseurs'))
+
     cur.execute('SELECT * FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
     fournisseur = cur.fetchone()
-    return render_template('fournisseur_edit.html', fournisseur=fournisseur)
+    # All distinct marques
+    cur.execute('SELECT MIN(id_marque) as id_marque, nom_marque FROM marque GROUP BY nom_marque ORDER BY nom_marque')
+    marques_list = cur.fetchall()
+    # All modeles linked to canonical marque ids
+    cur.execute('''
+        SELECT m.id_modele, m.nom_modele, m.id_marque, mq.nom_marque
+        FROM modele m JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE m.id_marque IN (SELECT MIN(id_marque) FROM marque GROUP BY nom_marque)
+        ORDER BY mq.nom_marque, m.nom_modele
+    ''')
+    modeles_list = cur.fetchall()
+    # Currently selected marque ids for this fournisseur
+    cur.execute('SELECT id_marque FROM fournisseur_marque WHERE id_fournisseur=?', (id_fournisseur,))
+    selected_marques = {r['id_marque'] for r in cur.fetchall()}
+    # Currently selected modele ids
+    cur.execute('SELECT id_modele FROM fournisseur_modele WHERE id_fournisseur=?', (id_fournisseur,))
+    selected_modeles = {r['id_modele'] for r in cur.fetchall()}
+    return render_template('fournisseur_edit.html',
+                           fournisseur=fournisseur,
+                           marques=marques_list,
+                           modeles=modeles_list,
+                           selected_marques=selected_marques,
+                           selected_modeles=selected_modeles)
 
 @app.route('/fournisseurs/delete/<int:id_fournisseur>', methods=['POST'])
 @admin_required
 def fournisseur_delete(id_fournisseur):
     db = get_db()
+    db.execute('DELETE FROM fournisseur_marque WHERE id_fournisseur=?', (id_fournisseur,))
+    db.execute('DELETE FROM fournisseur_modele WHERE id_fournisseur=?', (id_fournisseur,))
     db.execute('DELETE FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
     db.commit()
     flash('Fournisseur supprimé.', 'success')

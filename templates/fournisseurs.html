@@ -39,7 +39,7 @@
     gap: 8px;
     min-width: 220px;
   }
-  .search-bar i { color: #555; font-size: 1rem; }
+  .search-bar i { color: #555; }
   .search-bar input {
     background: transparent;
     border: none;
@@ -68,9 +68,10 @@
   }
   .btn-add:hover { background: #b30000; }
 
+  /* Stats */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
     margin-bottom: 20px;
   }
@@ -83,6 +84,7 @@
   .stat-card .label { font-size: 0.72rem; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
   .stat-card .value { font-size: 1.3rem; font-weight: 700; color: #fff; }
 
+  /* Add panel */
   .add-panel {
     background: #0f0f0f;
     border: 1px solid #1e1e1e;
@@ -103,13 +105,27 @@
     gap: 8px;
   }
   .add-panel-body { padding: 20px; }
+  .section-sep {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 0 8px;
+    border-top: 1px solid #1e1e1e;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-sep i { color: #990000; }
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+    gap: 13px;
+    margin-bottom: 10px;
   }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group label { font-size: 0.78rem; color: #888; font-weight: 500; }
   .form-group input {
     background: #1a1a1a;
@@ -122,11 +138,59 @@
     transition: border-color 0.2s;
   }
   .form-group input:focus { border-color: #990000; }
-  .form-group input::placeholder { color: #444; }
-  .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .form-group input::placeholder { color: #3a3a3a; }
+
+  /* Checkbox groups */
+  .checkbox-section {
+    margin-top: 12px;
+  }
+  .checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .checkbox-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #999;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .checkbox-pill input[type="checkbox"] { display: none; }
+  .checkbox-pill.checked {
+    background: rgba(153,0,0,0.18);
+    border-color: #990000;
+    color: #fff;
+  }
+  .checkbox-pill .pill-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #333;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .checkbox-pill.checked .pill-dot { background: #990000; }
+
+  .modele-pill.checked {
+    background: rgba(212,175,55,0.12);
+    border-color: #D4AF37;
+    color: #D4AF37;
+  }
+  .modele-pill.checked .pill-dot { background: #D4AF37; }
+
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .btn-save {
     background: #990000; color: #fff; border: none; border-radius: 7px;
     padding: 9px 20px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    display: flex; align-items: center; gap: 6px;
   }
   .btn-save:hover { background: #b30000; }
   .btn-cancel-form {
@@ -135,6 +199,7 @@
   }
   .btn-cancel-form:hover { color: #fff; border-color: #555; }
 
+  /* Table */
   .table-wrapper {
     background: #0d0d0d;
     border: 1px solid #1e1e1e;
@@ -144,71 +209,73 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
   }
   thead th {
     background: #111;
-    color: #666;
-    font-size: 0.72rem;
+    color: #555;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    padding: 13px 16px;
+    padding: 12px 14px;
     text-align: left;
     border-bottom: 1px solid #1e1e1e;
     white-space: nowrap;
   }
-  tbody tr {
-    border-bottom: 1px solid #141414;
-    transition: background 0.15s;
-  }
+  tbody tr { border-bottom: 1px solid #141414; transition: background 0.15s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: #111; }
-  tbody td {
-    padding: 13px 16px;
-    color: #ccc;
-    vertical-align: middle;
+  tbody td { padding: 12px 14px; color: #ccc; vertical-align: middle; }
+
+  .td-id { color: #333; font-size: 0.78rem; width: 38px; }
+  .td-name { color: #fff; font-weight: 600; }
+  .td-sub { color: #555; font-size: 0.78rem; margin-top: 2px; }
+  .td-mono { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #aaa; }
+  .td-dim { color: #666; font-size: 0.8rem; }
+  .td-ice { color: #888; font-family: 'Courier New', monospace; font-size: 0.78rem; }
+
+  .pill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.74rem;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin: 2px 2px 2px 0;
   }
-  .td-id { color: #444; font-size: 0.8rem; width: 44px; }
-  .td-name { color: #fff; font-weight: 500; }
-  .td-phone { color: #aaa; font-family: 'Courier New', monospace; font-size: 0.82rem; }
-  .td-email { color: #777; font-size: 0.82rem; }
-  .td-address { color: #888; font-size: 0.82rem; max-width: 200px; }
-  .td-badge {
+  .pill-tag.orange { background: rgba(251,146,60,0.12); color: #fb923c; }
+  .pill-tag.gold   { background: rgba(212,175,55,0.12);  color: #D4AF37; }
+  .pill-tag.orders { background: rgba(59,130,246,0.12);  color: #60a5fa; }
+
+  .delay-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.78rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-weight: 600;
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.76rem;
+    color: #777;
   }
-  .td-badge.orange { background: rgba(251,146,60,0.12); color: #fb923c; }
+
   .actions { display: flex; gap: 6px; }
   .btn-icon {
     background: transparent;
     border: 1px solid #2a2a2a;
     border-radius: 6px;
     color: #555;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 1rem;
-    text-decoration: none;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; font-size: 0.95rem; text-decoration: none;
   }
   .btn-icon:hover.edit { border-color: #D4AF37; color: #D4AF37; }
-  .btn-icon:hover.del { border-color: #990000; color: #990000; }
-  .empty-row td {
-    text-align: center;
-    padding: 48px 16px;
-    color: #444;
-    font-size: 0.9rem;
-  }
-  .empty-row td i { font-size: 2.5rem; display: block; margin-bottom: 10px; color: #2a2a2a; }
+  .btn-icon:hover.del  { border-color: #990000; color: #990000; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: #444; }
+  .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; color: #222; }
 </style>
 
 <div class="page-header">
@@ -220,7 +287,7 @@
   <div class="header-actions">
     <div class="search-bar">
       <i class='bx bx-search'></i>
-      <input type="text" id="searchInput" placeholder="Rechercher un fournisseur…" oninput="filterTable()">
+      <input type="text" id="searchInput" placeholder="Rechercher…" oninput="filterTable()">
     </div>
     <button class="btn-add" onclick="toggleForm()">
       <i class='bx bx-plus'></i> Ajouter
@@ -228,47 +295,109 @@
   </div>
 </div>
 
-<!-- Stats -->
+<!-- Stats row -->
 <div class="stats-row">
   <div class="stat-card">
-    <div class="label">Total fournisseurs</div>
+    <div class="label">Total</div>
     <div class="value">{{ fournisseurs|length }}</div>
   </div>
   <div class="stat-card">
-    <div class="label">Actifs (avec commandes)</div>
-    <div class="value">{{ fournisseurs | selectattr('nb_commandes', 'gt', 0) | list | length }}</div>
+    <div class="label">Avec commandes</div>
+    <div class="value">{{ fournisseurs|selectattr('nb_commandes','gt',0)|list|length }}</div>
   </div>
   <div class="stat-card">
-    <div class="label">Total commandes</div>
-    <div class="value">{{ fournisseurs | sum(attribute='nb_commandes') if fournisseurs else 0 }}</div>
+    <div class="label">Commandes totales</div>
+    <div class="value">{{ fournisseurs|sum(attribute='nb_commandes') if fournisseurs else 0 }}</div>
   </div>
 </div>
 
-<!-- Add form panel -->
+<!-- Add panel -->
 <div class="add-panel" id="addPanel">
   <div class="add-panel-header">
     <i class='bx bx-building-house'></i> Nouveau fournisseur
   </div>
   <div class="add-panel-body">
     <form method="POST" action="/fournisseurs">
-      <div class="form-grid">
+      <!-- Identité -->
+      <div class="section-sep"><i class='bx bx-store'></i> Identité</div>
+      <div class="form-grid" style="margin-top:10px;">
         <div class="form-group">
           <label>Nom / Raison sociale *</label>
-          <input type="text" name="nom" placeholder="Nom de l'entreprise" required>
+          <input type="text" name="nom" placeholder="Nom" required>
         </div>
+        <div class="form-group">
+          <label>ICE</label>
+          <input type="text" name="ice" placeholder="000000000000000">
+        </div>
+        <div class="form-group">
+          <label>Pays</label>
+          <input type="text" name="pays" placeholder="Maroc, France…">
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="section-sep"><i class='bx bx-phone'></i> Contact</div>
+      <div class="form-grid" style="margin-top:10px;">
         <div class="form-group">
           <label>Téléphone</label>
           <input type="text" name="telephone" placeholder="0600000000">
         </div>
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" placeholder="contact@fournisseur.ma">
+          <label>Contact personnel</label>
+          <input type="text" name="contact_personnel" placeholder="Numéro direct">
         </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="contact@exemple.ma">
+        </div>
+        <div class="form-group">
           <label>Adresse</label>
-          <input type="text" name="adresse" placeholder="Rue, Ville, Code postal">
+          <input type="text" name="adresse" placeholder="Rue, Ville">
         </div>
       </div>
+
+      <!-- Livraison -->
+      <div class="section-sep"><i class='bx bx-time'></i> Logistique</div>
+      <div class="form-grid" style="margin-top:10px;">
+        <div class="form-group">
+          <label>Délai de livraison</label>
+          <input type="text" name="delai_livraison" placeholder="ex: 7-14 jours">
+        </div>
+      </div>
+
+      {% if marques %}
+      <!-- Marques -->
+      <div class="section-sep"><i class='bx bx-tag'></i> Marques fournies</div>
+      <div class="checkbox-section">
+        <div class="checkbox-grid" id="addMarqueGrid">
+          {% for mq in marques %}
+          <label class="checkbox-pill" onclick="togglePill(this,'marque')">
+            <input type="checkbox" name="marques" value="{{ mq.id_marque }}">
+            <span class="pill-dot"></span>
+            {{ mq.nom_marque }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Modèles -->
+      <div class="section-sep"><i class='bx bx-car'></i> Modèles fournis</div>
+      <div class="checkbox-section">
+        <div class="checkbox-grid" id="addModeleGrid">
+          {% for mo in modeles %}
+          <label class="checkbox-pill modele-pill" data-marque="{{ mo.id_marque }}" onclick="togglePill(this,'modele')" style="display:none;">
+            <input type="checkbox" name="modeles" value="{{ mo.id_modele }}">
+            <span class="pill-dot"></span>
+            {{ mo.nom_modele }}
+          </label>
+          {% endfor %}
+        </div>
+        <div id="addModeleHint" style="color:#444; font-size:0.8rem; margin-top:6px;">
+          Sélectionnez d'abord une marque pour voir ses modèles.
+        </div>
+      </div>
+      {% endif %}
+
       <div class="form-actions">
         <button type="button" class="btn-cancel-form" onclick="toggleForm()">Annuler</button>
         <button type="submit" class="btn-save"><i class='bx bx-check'></i> Enregistrer</button>
@@ -279,14 +408,17 @@
 
 <!-- Table -->
 <div class="table-wrapper">
-  <table id="fournisseursTable">
+  <table>
     <thead>
       <tr>
         <th>#</th>
         <th>Nom / Raison sociale</th>
-        <th>Téléphone</th>
+        <th>ICE</th>
+        <th>Pays</th>
+        <th>Contact</th>
         <th>Email</th>
-        <th>Adresse</th>
+        <th>Délai livraison</th>
+        <th>Marques fournies</th>
         <th>Commandes</th>
         <th>Actions</th>
       </tr>
@@ -296,15 +428,39 @@
         {% for f in fournisseurs %}
         <tr class="fourn-row">
           <td class="td-id">{{ f.id_fournisseur }}</td>
-          <td class="td-name">{{ f.nom or '—' }}</td>
-          <td class="td-phone">{{ f.telephone or '—' }}</td>
-          <td class="td-email">{{ f.email or '—' }}</td>
-          <td class="td-address">{{ f.adresse or '—' }}</td>
+          <td>
+            <div class="td-name">{{ f.nom or '—' }}</div>
+            {% if f.adresse %}<div class="td-sub">{{ f.adresse }}</div>{% endif %}
+          </td>
+          <td class="td-ice">{{ f.ice or '—' }}</td>
+          <td class="td-dim">{{ f.pays or '—' }}</td>
+          <td>
+            {% if f.telephone %}<div class="td-mono">{{ f.telephone }}</div>{% endif %}
+            {% if f.contact_personnel %}<div class="td-mono" style="color:#D4AF37; margin-top:3px;"><i class='bx bx-user' style="font-size:0.75rem;"></i> {{ f.contact_personnel }}</div>{% endif %}
+            {% if not f.telephone and not f.contact_personnel %}<span class="td-dim">—</span>{% endif %}
+          </td>
+          <td class="td-dim">{{ f.email or '—' }}</td>
+          <td>
+            {% if f.delai_livraison %}
+              <span class="delay-badge"><i class='bx bx-time-five'></i> {{ f.delai_livraison }}</span>
+            {% else %}
+              <span class="td-dim">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if f.marques_fournies %}
+              {% for mq_name in f.marques_fournies.split(',') %}
+                <span class="pill-tag orange">{{ mq_name.strip() }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="td-dim">—</span>
+            {% endif %}
+          </td>
           <td>
             {% if f.nb_commandes and f.nb_commandes > 0 %}
-              <span class="td-badge orange"><i class='bx bx-package'></i> {{ f.nb_commandes }}</span>
+              <span class="pill-tag orders"><i class='bx bx-package'></i> {{ f.nb_commandes }}</span>
             {% else %}
-              <span style="color:#333; font-size:0.8rem;">—</span>
+              <span class="td-dim">—</span>
             {% endif %}
           </td>
           <td>
@@ -323,17 +479,21 @@
         </tr>
         {% endfor %}
       {% else %}
-        <tr class="empty-row">
-          <td colspan="7">
-            <i class='bx bx-building'></i>
-            Aucun fournisseur enregistré
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">
+              <i class='bx bx-building'></i>
+              Aucun fournisseur enregistré
+            </div>
           </td>
         </tr>
       {% endif %}
       <tr id="noResults" style="display:none;">
-        <td colspan="7" style="text-align:center; padding:40px; color:#444;">
-          <i class='bx bx-search-alt' style="font-size:2rem; display:block; margin-bottom:8px; color:#2a2a2a;"></i>
-          Aucun résultat pour cette recherche
+        <td colspan="10">
+          <div class="empty-state">
+            <i class='bx bx-search-alt'></i>
+            Aucun résultat pour cette recherche
+          </div>
         </td>
       </tr>
     </tbody>
@@ -341,25 +501,62 @@
 </div>
 
 <script>
+  // Build marque → modele map from the pill grid
+  const modeleMap = {};
+  document.querySelectorAll('#addModeleGrid .modele-pill').forEach(el => {
+    const marqueId = el.dataset.marque;
+    if (!modeleMap[marqueId]) modeleMap[marqueId] = [];
+    modeleMap[marqueId].push(el);
+  });
+
+  function togglePill(el, type) {
+    const cb = el.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    el.classList.toggle('checked', cb.checked);
+    if (type === 'marque') updateModeleVisibility('add');
+  }
+
+  function updateModeleVisibility(prefix) {
+    const grid   = document.getElementById(prefix + 'ModeleGrid');
+    const hint   = document.getElementById(prefix + 'ModeleHint');
+    if (!grid) return;
+
+    // Collect checked marque ids from nearby form
+    const checkedMarques = new Set();
+    grid.closest('form').querySelectorAll('input[name="marques"]:checked').forEach(cb => {
+      checkedMarques.add(cb.value);
+    });
+
+    let anyVisible = false;
+    grid.querySelectorAll('.modele-pill').forEach(pill => {
+      const show = checkedMarques.has(pill.dataset.marque);
+      pill.style.display = show ? 'flex' : 'none';
+      if (!show && pill.classList.contains('checked')) {
+        pill.classList.remove('checked');
+        pill.querySelector('input').checked = false;
+      }
+      if (show) anyVisible = true;
+    });
+
+    if (hint) hint.style.display = anyVisible ? 'none' : 'block';
+  }
+
   function toggleForm() {
     const panel = document.getElementById('addPanel');
     panel.classList.toggle('open');
-    if (panel.classList.contains('open')) {
-      panel.querySelector('input').focus();
-    }
+    if (panel.classList.contains('open')) panel.querySelector('input').focus();
   }
 
   function filterTable() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
+    const q = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('.fourn-row');
     let visible = 0;
     rows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      const match = text.includes(query);
+      const match = row.textContent.toLowerCase().includes(q);
       row.style.display = match ? '' : 'none';
       if (match) visible++;
     });
-    document.getElementById('noResults').style.display = (visible === 0 && query) ? 'table-row' : 'none';
+    document.getElementById('noResults').style.display = (visible === 0 && q) ? 'table-row' : 'none';
   }
 </script>
 
