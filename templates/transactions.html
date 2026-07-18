@@ -40,10 +40,13 @@
                             -
                         {% endif %}
                     </td>
-                    <td style="font-family: monospace; color: var(--text-muted);">{{ vente.vin }}</td>
+                    <td><a href="{{ url_for('voiture_detail', vin=vente.vin) }}" style="font-family:monospace;color:var(--text-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='var(--text-muted)'">{{ vente.vin }}</a></td>
                     <td style="font-weight: 600; color: var(--success);">{% if vente.total %}{{ "{:,.2f}".format(vente.total) }} MAD{% else %}-{% endif %}</td>
-                    <td>
+                    <td style="display:flex;gap:6px;align-items:center;">
                         <a href="{{ url_for('confirmation', id_vente=vente.id_vente) }}" class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; background: linear-gradient(135deg, #065f46, #059669); white-space: nowrap;" title="Bon de Confirmation"><i class='bx bx-check-circle'></i> Bon</a>
+                        <form action="{{ url_for('vente_delete', id_vente=vente.id_vente) }}" method="POST" style="margin:0;" onsubmit="return confirm('Annuler cette vente ? Le véhicule sera remis en stock. Cette action est irréversible.');">
+                            <button type="submit" class="btn" style="padding:0.35rem 0.75rem;font-size:0.75rem;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);white-space:nowrap;" title="Annuler la vente"><i class='bx bx-x-circle'></i> Annuler</button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}
@@ -78,7 +81,7 @@
                     <td>#{{ achat.id_cmdA }}</td>
                     <td>{{ achat.date_cmd }}</td>
                     <td style="font-weight: 500;">{{ achat.fnom }}</td>
-                    <td style="font-family: monospace; color: var(--text-muted);">{{ achat.vin }}</td>
+                    <td><a href="{{ url_for('voiture_detail', vin=achat.vin) }}" style="font-family:monospace;color:var(--text-muted);text-decoration:none;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='var(--text-muted)'">{{ achat.vin }}</a></td>
                 </tr>
                 {% else %}
                 <tr>
