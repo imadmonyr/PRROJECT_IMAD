@@ -3,69 +3,402 @@
 {% block page_title %}Gestion des Agents{% endblock %}
 
 {% block content %}
-<div style="display:grid;grid-template-columns:1fr 350px;gap:2rem;">
-    <div class="table-container">
-        <div style="padding:1.5rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
-            <h2 style="font-size:1.1rem;font-weight:600;">Liste des Agents</h2>
-            <button onclick="window.print()" class="btn" style="padding:0.5rem 1rem;font-size:0.85rem;background:#475569;"><i class='bx bx-printer'></i> Imprimer</button>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom Complet</th>
-                    <th>Téléphone</th>
-                    <th>Taux Commission</th>
-                    <th>Commissions Gagnées</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for agent in agents %}
-                <tr>
-                    <td>
-                        <div style="font-weight:500;">{{ agent.prenom }} {{ agent.nom }}</div>
-                        <div style="font-size:0.78rem;color:var(--text-muted);">{{ agent.email }}</div>
-                    </td>
-                    <td>{{ agent.telephone }}</td>
-                    <td style="font-weight:600;">{{ agent.taux_commission }}%</td>
-                    <td style="font-weight:600;color:var(--success);">
-                        {% if agent.total_gagne %}{{ "{:,.0f}".format(agent.total_gagne) }} MAD{% else %}0 MAD{% endif %}
-                    </td>
-                    <td>
-                        <div style="display:flex;gap:6px;">
-                            <a href="{{ url_for('agent_edit', id_agent=agent.id_agent) }}" class="btn-action btn-edit" title="Modifier"><i class='bx bx-edit'></i></a>
-                            <form action="{{ url_for('agent_delete', id_agent=agent.id_agent) }}" method="POST" style="margin:0;"
-                                  onsubmit="return confirm('Supprimer cet agent ?');">
-                                <button type="submit" class="btn-action btn-delete" title="Supprimer"><i class='bx bx-trash'></i></button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="5" style="text-align:center;padding:3rem;color:var(--text-muted);">Aucun agent trouvé.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<style>
+  /* ── Page header ───────────────────────────────── */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .page-title {
+    font-size: 1.5rem; font-weight: 700; color: #fff;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .page-title i { color: #990000; font-size: 1.6rem; }
+  .badge-count {
+    background: #990000; color: #fff; font-size: 0.75rem;
+    font-weight: 600; padding: 2px 10px; border-radius: 12px;
+  }
+  .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    <div class="form-container" style="height:fit-content;padding:1.5rem;">
-        <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;">Nouvel Agent</h2>
-        <form method="POST" action="{{ url_for('agents') }}">
-            <div class="form-group"><label>Nom</label><input type="text" name="nom" required></div>
-            <div class="form-group"><label>Prénom</label><input type="text" name="prenom" required></div>
-            <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" required></div>
-            <div class="form-group"><label>Email</label><input type="email" name="email"></div>
-            <div class="form-group"><label>Taux Commission (%)</label><input type="number" name="taux_commission" step="0.01" min="0" max="100" required></div>
-            <button type="submit" class="btn" style="width:100%;"><i class='bx bx-user-plus'></i> Ajouter Agent</button>
-        </form>
+  /* ── Search bar ────────────────────────────────── */
+  .search-bar {
+    display: flex; align-items: center; background: #111;
+    border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 0 12px; gap: 8px; min-width: 220px;
+  }
+  .search-bar i { color: #555; }
+  .search-bar input {
+    background: transparent; border: none; outline: none;
+    color: #fff; font-size: 0.875rem; padding: 8px 0; width: 100%;
+  }
+  .search-bar input::placeholder { color: #444; }
+
+  .btn-add {
+    background: #990000; color: #fff; border: none; border-radius: 8px;
+    padding: 9px 18px; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .btn-add:hover { background: #b30000; }
+
+  /* ── Stats ─────────────────────────────────────── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: #0f0f0f; border: 1px solid #1e1e1e;
+    border-radius: 10px; padding: 14px 18px;
+  }
+  .stat-card .label { font-size: 0.72rem; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .stat-card .value { font-size: 1.3rem; font-weight: 700; color: #fff; }
+
+  /* ── Add panel ─────────────────────────────────── */
+  .add-panel {
+    background: #0f0f0f; border: 1px solid #1e1e1e;
+    border-radius: 12px; margin-bottom: 20px; overflow: hidden; display: none;
+  }
+  .add-panel.open { display: block; }
+  .add-panel-header {
+    background: #990000; padding: 12px 20px;
+    font-weight: 600; font-size: 0.9rem; color: #fff;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .add-panel-body { padding: 20px; }
+  .section-sep {
+    font-size: 0.72rem; font-weight: 600; color: #444;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 10px 0 8px; border-top: 1px solid #1e1e1e;
+    margin-top: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-sep:first-child { border-top: none; padding-top: 0; }
+  .section-sep i { color: #990000; }
+  .form-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+    gap: 13px; margin-bottom: 10px; margin-top: 10px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 0.78rem; color: #888; font-weight: 500; }
+  .form-group input, .form-group select {
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 7px;
+    color: #fff; font-size: 0.875rem; padding: 9px 12px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #990000; }
+  .form-group input::placeholder { color: #3a3a3a; }
+  .form-group select option { background: #1a1a1a; }
+
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  .btn-save {
+    background: #990000; color: #fff; border: none; border-radius: 7px;
+    padding: 9px 20px; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-save:hover { background: #b30000; }
+  .btn-cancel-form {
+    background: transparent; color: #888; border: 1px solid #2a2a2a;
+    border-radius: 7px; padding: 9px 16px; font-size: 0.875rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-cancel-form:hover { color: #fff; border-color: #555; }
+
+  /* ── Table ─────────────────────────────────────── */
+  .table-wrapper {
+    background: #0d0d0d; border: 1px solid #1e1e1e;
+    border-radius: 12px; overflow-x: auto;
+  }
+  table {
+    width: 100%; min-width: 680px; border-collapse: collapse;
+    font-size: 0.85rem; table-layout: fixed;
+  }
+  col.c-agent   { width: 22%; }
+  col.c-cin     { width: 12%; }
+  col.c-contact { width: 20%; }
+  col.c-addr    { width: 18%; }
+  col.c-comm    { width: 10%; }
+  col.c-earned  { width: 10%; }
+  col.c-statut  { width: 8%; }
+  col.c-actions { width: 10%; }
+
+  thead th {
+    background: #111; color: #555; font-size: 0.7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 11px 12px; text-align: left;
+    border-bottom: 1px solid #1e1e1e; white-space: nowrap; overflow: hidden;
+  }
+  tbody tr { border-bottom: 1px solid #141414; transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #111; }
+  tbody td { padding: 11px 12px; color: #ccc; vertical-align: middle; overflow: hidden; }
+
+  .td-name { color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-sub  { color: #555; font-size: 0.75rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-mono { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-dim  { color: #666; font-size: 0.79rem; }
+
+  .cin-chip {
+    display: inline-block; font-family: 'Courier New', monospace; font-size: 0.75rem;
+    color: #888; background: #141414; border: 1px solid #222;
+    border-radius: 4px; padding: 2px 7px;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.74rem; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+  }
+  .status-actif   { background: rgba(34,197,94,0.1);  color: #22c55e; }
+  .status-inactif { background: rgba(239,68,68,0.1);  color: #ef4444; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .status-actif   .status-dot { background: #22c55e; }
+  .status-inactif .status-dot { background: #ef4444; }
+
+  .comm-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(153,0,0,0.12); color: #cc4444;
+    border-radius: 6px; padding: 3px 8px; font-size: 0.8rem; font-weight: 600;
+  }
+  .earned-val { color: #D4AF37; font-weight: 600; font-size: 0.82rem; }
+
+  .actions { display: flex; gap: 6px; }
+  .btn-icon {
+    background: transparent; border: 1px solid #2a2a2a; border-radius: 6px;
+    color: #555; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; font-size: 0.95rem; text-decoration: none;
+  }
+  .btn-icon:hover.edit { border-color: #D4AF37; color: #D4AF37; }
+  .btn-icon:hover.del  { border-color: #990000; color: #990000; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: #444; }
+  .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; color: #222; }
+</style>
+
+<div class="page-header">
+  <div class="page-title">
+    <i class='bx bx-user-pin'></i>
+    Agents
+    <span class="badge-count">{{ agents|length }}</span>
+  </div>
+  <div class="header-actions">
+    <div class="search-bar">
+      <i class='bx bx-search'></i>
+      <input type="text" id="searchInput" placeholder="Rechercher…" oninput="filterTable()">
     </div>
+    <button class="btn-add" onclick="toggleForm()">
+      <i class='bx bx-plus'></i> Ajouter
+    </button>
+  </div>
 </div>
 
-<style>
-.btn-action { display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);text-decoration:none;cursor:pointer;transition:all 0.2s;font-size:1rem; }
-.btn-edit { background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3); }
-.btn-edit:hover { background:rgba(59,130,246,0.2); }
-.btn-delete { background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.3); }
-.btn-delete:hover { background:rgba(239,68,68,0.2); }
-</style>
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="label">Total agents</div>
+    <div class="value">{{ agents|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Actifs</div>
+    <div class="value" style="color:#22c55e;">{{ agents|selectattr('statut','equalto','Actif')|list|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Inactifs</div>
+    <div class="value" style="color:#ef4444;">{{ agents|selectattr('statut','equalto','Inactif')|list|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Commissions totales</div>
+    <div class="value" style="color:#D4AF37;">
+      {% set total = namespace(v=0) %}
+      {% for a in agents %}{% if a.total_gagne %}{% set total.v = total.v + a.total_gagne %}{% endif %}{% endfor %}
+      {{ "{:,.0f}".format(total.v) }} MAD
+    </div>
+  </div>
+</div>
+
+<!-- Add panel -->
+<div class="add-panel" id="addPanel">
+  <div class="add-panel-header">
+    <i class='bx bx-user-plus'></i> Nouvel agent
+  </div>
+  <div class="add-panel-body">
+    <form method="POST" action="{{ url_for('agents') }}">
+      <div class="section-sep" style="border-top:none;padding-top:0;"><i class='bx bx-id-card'></i> Identité</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" name="nom" placeholder="Nom" required>
+        </div>
+        <div class="form-group">
+          <label>Prénom *</label>
+          <input type="text" name="prenom" placeholder="Prénom" required>
+        </div>
+        <div class="form-group">
+          <label>CIN</label>
+          <input type="text" name="cin" placeholder="AB123456">
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <select name="statut">
+            <option value="Actif" selected>Actif</option>
+            <option value="Inactif">Inactif</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-sep"><i class='bx bx-phone'></i> Contact</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="text" name="telephone" placeholder="0600000000">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="agent@luxedrive.ma">
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label>Adresse</label>
+          <input type="text" name="adresse" placeholder="Rue, Ville">
+        </div>
+      </div>
+
+      <div class="section-sep"><i class='bx bx-trending-up'></i> Commission</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Taux de commission (%)</label>
+          <input type="number" name="taux_commission" placeholder="0.00" step="0.01" min="0" max="100" required>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel-form" onclick="toggleForm()">Annuler</button>
+        <button type="submit" class="btn-save"><i class='bx bx-check'></i> Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-wrapper">
+  <table>
+    <colgroup>
+      <col class="c-agent">
+      <col class="c-cin">
+      <col class="c-contact">
+      <col class="c-addr">
+      <col class="c-comm">
+      <col class="c-earned">
+      <col class="c-statut">
+      <col class="c-actions">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>CIN</th>
+        <th>Contact</th>
+        <th>Adresse</th>
+        <th style="text-align:center;">Comm.</th>
+        <th style="text-align:right;">Gagné</th>
+        <th style="text-align:center;">Statut</th>
+        <th style="text-align:center;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for agent in agents %}
+      <tr class="agent-row">
+        <!-- Agent name -->
+        <td>
+          <div class="td-name">{{ agent.prenom }} {{ agent.nom }}</div>
+        </td>
+        <!-- CIN -->
+        <td>
+          {% if agent.cin %}
+            <span class="cin-chip">{{ agent.cin }}</span>
+          {% else %}
+            <span class="td-dim">—</span>
+          {% endif %}
+        </td>
+        <!-- Contact -->
+        <td>
+          {% if agent.telephone %}<div class="td-mono">{{ agent.telephone }}</div>{% endif %}
+          {% if agent.email %}<div class="td-sub" style="margin-top:2px;">{{ agent.email }}</div>{% endif %}
+          {% if not agent.telephone and not agent.email %}<span class="td-dim">—</span>{% endif %}
+        </td>
+        <!-- Adresse -->
+        <td>
+          <div class="td-sub" style="font-size:0.82rem; color:#888;">{{ agent.adresse or '—' }}</div>
+        </td>
+        <!-- Commission rate -->
+        <td style="text-align:center;">
+          <span class="comm-badge">{{ agent.taux_commission }}%</span>
+        </td>
+        <!-- Earned -->
+        <td style="text-align:right;">
+          {% if agent.total_gagne and agent.total_gagne > 0 %}
+            <span class="earned-val">{{ "{:,.0f}".format(agent.total_gagne) }} MAD</span>
+          {% else %}
+            <span class="td-dim">—</span>
+          {% endif %}
+        </td>
+        <!-- Statut -->
+        <td style="text-align:center;">
+          {% set s = agent.statut or 'Actif' %}
+          <span class="status-badge {% if s == 'Actif' %}status-actif{% else %}status-inactif{% endif %}">
+            <span class="status-dot"></span>{{ s }}
+          </span>
+        </td>
+        <!-- Actions -->
+        <td>
+          <div class="actions" style="justify-content:center;">
+            <a href="{{ url_for('agent_edit', id_agent=agent.id_agent) }}" class="btn-icon edit" title="Modifier">
+              <i class='bx bx-edit'></i>
+            </a>
+            <form action="{{ url_for('agent_delete', id_agent=agent.id_agent) }}" method="POST" style="margin:0;"
+                  onsubmit="return confirm('Supprimer cet agent ?');">
+              <button type="submit" class="btn-icon del" title="Supprimer"><i class='bx bx-trash'></i></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <i class='bx bx-user-x'></i>
+            Aucun agent enregistré
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr id="noResults" style="display:none;">
+        <td colspan="8">
+          <div class="empty-state">
+            <i class='bx bx-search-alt'></i>
+            Aucun résultat pour cette recherche
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function toggleForm() {
+    const panel = document.getElementById('addPanel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) panel.querySelector('input').focus();
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.agent-row');
+    let visible = 0;
+    rows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('noResults').style.display = (visible === 0 && q) ? 'table-row' : 'none';
+  }
+</script>
+
 {% endblock %}

@@ -178,6 +178,15 @@ def init_db():
         db.execute("ALTER TABLE client ADD COLUMN adresse TEXT")
     except Exception:
         pass  # Column already exists — safe to ignore
+    for _a_col in [
+        "ALTER TABLE agent ADD COLUMN cin     TEXT",
+        "ALTER TABLE agent ADD COLUMN adresse TEXT",
+        "ALTER TABLE agent ADD COLUMN statut  TEXT DEFAULT 'Actif'",
+    ]:
+        try:
+            db.execute(_a_col)
+        except Exception:
+            pass
     try:
         db.execute("ALTER TABLE fournisseur ADD COLUMN email TEXT")
     except Exception:
@@ -821,20 +830,29 @@ def agents():
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        nom = request.form['nom']
-        prenom = request.form['prenom']
-        telephone = request.form['telephone']
-        email = request.form['email']
-        taux_commission = request.form['taux_commission']
-        cur.execute('INSERT INTO agent (nom, prenom, telephone, email, taux_commission) VALUES (?, ?, ?, ?, ?)', (nom, prenom, telephone, email, taux_commission))
+        cur.execute(
+            'INSERT INTO agent (nom, prenom, telephone, email, taux_commission, cin, adresse, statut) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (
+                request.form['nom'],
+                request.form['prenom'],
+                request.form.get('telephone', ''),
+                request.form.get('email', ''),
+                request.form['taux_commission'],
+                request.form.get('cin', ''),
+                request.form.get('adresse', ''),
+                request.form.get('statut', 'Actif'),
+            )
+        )
         db.commit()
+        flash('Agent ajouté avec succès.', 'success')
         return redirect(url_for('agents'))
-        
+
     cur.execute('''
         SELECT a.*, SUM(v.montant_commission) as total_gagne
         FROM agent a
         LEFT JOIN vente v ON a.id_agent = v.id_agent
         GROUP BY a.id_agent
+        ORDER BY a.nom, a.prenom
     ''')
     agents_list = cur.fetchall()
     return render_template('agents.html', agents=agents_list)
@@ -845,9 +863,23 @@ def agent_edit(id_agent):
     db = get_db()
     cur = db.cursor()
     if request.method == 'POST':
-        cur.execute('UPDATE agent SET nom=?,prenom=?,telephone=?,email=?,taux_commission=? WHERE id_agent=?',
-                    (request.form['nom'], request.form['prenom'], request.form['telephone'],
-                     request.form['email'], request.form['taux_commission'], id_agent))
+        cur.execute(
+            '''UPDATE agent
+               SET nom=?, prenom=?, telephone=?, email=?, taux_commission=?,
+                   cin=?, adresse=?, statut=?
+               WHERE id_agent=?''',
+            (
+                request.form['nom'],
+                request.form['prenom'],
+                request.form.get('telephone', ''),
+                request.form.get('email', ''),
+                request.form['taux_commission'],
+                request.form.get('cin', ''),
+                request.form.get('adresse', ''),
+                request.form.get('statut', 'Actif'),
+                id_agent,
+            )
+        )
         db.commit()
         flash('Agent modifié avec succès.', 'success')
         return redirect(url_for('agents'))
