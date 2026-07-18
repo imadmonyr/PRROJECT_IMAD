@@ -48,6 +48,7 @@ def init_db():
             id_modele INTEGER PRIMARY KEY AUTOINCREMENT,
             nom_modele TEXT,
             id_marque INTEGER,
+            image_url TEXT,
             FOREIGN KEY (id_marque) REFERENCES marque(id_marque)
         );
 
@@ -143,6 +144,17 @@ def init_db():
             date_debut DATE,
             date_fin DATE,
             PRIMARY KEY (vin, id_client, date_debut),
+            FOREIGN KEY (vin) REFERENCES voiture(vin),
+            FOREIGN KEY (id_client) REFERENCES client(id_client)
+        );
+
+        CREATE TABLE IF NOT EXISTS devis (
+            id_devis INTEGER PRIMARY KEY AUTOINCREMENT,
+            vin TEXT,
+            id_client INTEGER,
+            date_devis DATE,
+            prix_vente REAL,
+            devis_num TEXT,
             FOREIGN KEY (vin) REFERENCES voiture(vin),
             FOREIGN KEY (id_client) REFERENCES client(id_client)
         );
@@ -296,6 +308,14 @@ def dashboard():
     total_vendues = cur.fetchone()['count']
     cur.execute("SELECT COUNT(*) as count FROM voiture WHERE statut='reservee'")
     total_reservees = cur.fetchone()['count']
+    # Profit = sum(prix_vente - prix_achat) for all sold cars
+    cur.execute("""
+        SELECT COALESCE(SUM(v.prix_vente - v.prix_achat), 0) as profit
+        FROM vente vt
+        JOIN ligne_vente lv ON vt.id_vente=lv.id_vente
+        JOIN voiture v ON lv.vin=v.vin
+    """)
+    marge_totale = cur.fetchone()['profit']
     # Monthly sales for chart (last 12 months)
     cur.execute("""
         SELECT strftime('%Y-%m', date_vente) as mois, COUNT(*) as nb,
@@ -330,7 +350,8 @@ def dashboard():
         total_ventes=total_ventes, chiffre_affaires=chiffre_affaires,
         total_vendues=total_vendues, total_reservees=total_reservees,
         chart_labels=json.dumps(chart_labels), chart_ventes=json.dumps(chart_ventes),
-        chart_ca=json.dumps(chart_ca), activites=activites)
+        chart_ca=json.dumps(chart_ca), activites=activites,
+        marge_totale=marge_totale)
 
 @app.route('/voitures')
 @login_required
@@ -338,6 +359,12 @@ def voitures():
     db = get_db()
     cur = db.cursor()
     cur.execute('''
+    # Safety: add image_url to modele if missing (for existing installs)
+    try:
+        db.execute("ALTER TABLE modele ADD COLUMN image_url TEXT")
+        db.commit()
+    except Exception:
+        pass  # Column already exists
         SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_vente, v.statut, m.nom_modele, mq.nom_marque
         FROM voiture v
         JOIN modele m ON v.id_modele = m.id_modele
@@ -345,33 +372,6 @@ def voitures():
     ''')
     voitures_list = cur.fetchall()
     return render_template('voitures.html', voitures=voitures_list)
-
-@app.route('/voitures/buy/<vin>', methods=['POST'])
-@login_required
-def voitures_buy(vin):
-    if g.user['role'] != 'user':
-        return redirect(url_for('voitures'))
-        
-    db = get_db()
-    cur = db.cursor()
-    
-    cur.execute('SELECT * FROM voiture WHERE vin = ? AND statut != "vendue"', (vin,))
-    voiture = cur.fetchone()
-    if not voiture:
-        return redirect(url_for('voitures'))
-        
-    from datetime import date
-    date_vente = date.today().strftime('%Y-%m-%d')
-    id_client = g.user['id_client']
-    
-    cur.execute('INSERT INTO vente (date_vente, id_client, id_agent, montant_commission) VALUES (?, ?, NULL, 0)', (date_vente, id_client))
-    id_vente = cur.lastrowid
-    
-    cur.execute('INSERT INTO ligne_vente (id_vente, vin) VALUES (?, ?)', (id_vente, vin))
-    cur.execute("UPDATE voiture SET statut = 'vendue' WHERE vin = ?", (vin,))
-    db.commit()
-    
-    return redirect(url_for('voitures'))
 
 @app.route('/voitures/add', methods=('GET', 'POST'))
 @admin_required
@@ -405,6 +405,7 @@ def voitures_add():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (vin, id_modele, type_v, immat_clean, annee, prix_achat, prix_vente, statut))
         db.commit()
+        flash('Voiture ajoutée avec succès.', 'success')
         return redirect(url_for('voitures'))
         
     cur.execute('''
@@ -450,6 +451,7 @@ def voiture_edit(vin):
                        prix_achat=?,prix_vente=?,statut=? WHERE vin=?''',
                     (id_modele, type_v, immatriculation, annee, prix_achat, prix_vente, statut, vin))
         db.commit()
+        flash('Voiture modifiée avec succès.', 'success')
         return redirect(url_for('voiture_detail', vin=vin))
     cur.execute('''SELECT v.*, m.nom_modele, mq.nom_marque FROM voiture v
                    JOIN modele m ON v.id_modele=m.id_modele
@@ -468,6 +470,7 @@ def voiture_delete(vin):
     db.execute('DELETE FROM ligne_achat WHERE vin=?', (vin,))
     db.execute('DELETE FROM voiture WHERE vin=?', (vin,))
     db.commit()
+    flash('Voiture supprimée.', 'success')
     return redirect(url_for('voitures'))
 
 @app.route('/clients', methods=('GET', 'POST'))
@@ -498,6 +501,7 @@ def client_edit(id_client):
                     (request.form['nom'], request.form['prenom'],
                      request.form['telephone'], request.form['email'], id_client))
         db.commit()
+        flash('Client modifié avec succès.', 'success')
         return redirect(url_for('clients'))
     cur.execute('SELECT * FROM client WHERE id_client=?', (id_client,))
     client = cur.fetchone()
@@ -509,6 +513,7 @@ def client_delete(id_client):
     db = get_db()
     db.execute('DELETE FROM client WHERE id_client=?', (id_client,))
     db.commit()
+    flash('Client supprimé.', 'success')
     return redirect(url_for('clients'))
 
 @app.route('/fournisseurs', methods=('GET', 'POST'))
@@ -538,6 +543,7 @@ def fournisseur_edit(id_fournisseur):
                     (request.form['nom'], request.form['adresse'],
                      request.form['telephone'], id_fournisseur))
         db.commit()
+        flash('Fournisseur modifié avec succès.', 'success')
         return redirect(url_for('fournisseurs'))
     cur.execute('SELECT * FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
     fournisseur = cur.fetchone()
@@ -549,6 +555,7 @@ def fournisseur_delete(id_fournisseur):
     db = get_db()
     db.execute('DELETE FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
     db.commit()
+    flash('Fournisseur supprimé.', 'success')
     return redirect(url_for('fournisseurs'))
 
 @app.route('/marques', methods=('GET', 'POST'))
@@ -652,6 +659,7 @@ def agent_edit(id_agent):
                     (request.form['nom'], request.form['prenom'], request.form['telephone'],
                      request.form['email'], request.form['taux_commission'], id_agent))
         db.commit()
+        flash('Agent modifié avec succès.', 'success')
         return redirect(url_for('agents'))
     cur.execute('SELECT * FROM agent WHERE id_agent=?', (id_agent,))
     agent = cur.fetchone()
@@ -663,6 +671,7 @@ def agent_delete(id_agent):
     db = get_db()
     db.execute('DELETE FROM agent WHERE id_agent=?', (id_agent,))
     db.commit()
+    flash('Agent supprimé.', 'success')
     return redirect(url_for('agents'))
 
 @app.route('/transactions')
@@ -703,16 +712,16 @@ def ventes_add():
         vin = request.form['vin']
         id_agent = request.form.get('id_agent')
         
+        # Get prix_vente always (needed for facture, regardless of agent)
+        cur.execute('SELECT prix_vente FROM voiture WHERE vin = ?', (vin,))
+        row_v = cur.fetchone()
+        prix_vente = row_v['prix_vente'] if row_v else 0.0
+        
         montant_commission = 0.0
         if id_agent:
-            cur.execute('SELECT prix_vente FROM voiture WHERE vin = ?', (vin,))
-            row = cur.fetchone()
-            prix_vente = row['prix_vente'] if row else 0.0
-            
             cur.execute('SELECT taux_commission FROM agent WHERE id_agent = ?', (id_agent,))
             row_agent = cur.fetchone()
             taux = row_agent['taux_commission'] if row_agent else 0.0
-            
             montant_commission = (prix_vente * taux) / 100.0
         
         cur.execute('INSERT INTO vente (date_vente, id_client, id_agent, montant_commission) VALUES (?, ?, ?, ?)',
@@ -721,9 +730,11 @@ def ventes_add():
         
         cur.execute('INSERT INTO ligne_vente (id_vente, vin) VALUES (?, ?)', (id_vente, vin))
         cur.execute("UPDATE voiture SET statut = 'vendue' WHERE vin = ?", (vin,))
-        
+        cur.execute('INSERT INTO facture (id_vente, date_facture, total) VALUES (?, ?, ?)',
+                    (id_vente, date_vente, prix_vente))
         db.commit()
-        return redirect(url_for('transactions'))
+        flash('Vente enregistrée avec succès.', 'success')
+        return redirect(url_for('confirmation', id_vente=id_vente))
         
     cur.execute('SELECT id_client, nom, prenom FROM client')
     clients = cur.fetchall()
@@ -733,7 +744,7 @@ def ventes_add():
         FROM voiture v
         JOIN modele m ON v.id_modele = m.id_modele
         JOIN marque mq ON m.id_marque = mq.id_marque
-        WHERE v.statut != 'vendue'
+        WHERE v.statut = 'en_stock'
     ''')
     voitures = cur.fetchall()
     
@@ -911,7 +922,7 @@ def devis_select():
         FROM voiture v
         JOIN modele m ON v.id_modele = m.id_modele
         JOIN marque mq ON m.id_marque = mq.id_marque
-        WHERE v.statut != 'vendue'
+        WHERE v.statut = 'en_stock'
     ''')
     voitures = cur.fetchall()
     
@@ -963,6 +974,26 @@ def confirmation(id_vente):
     facture = cur.fetchone()
     
     return render_template('confirmation.html', vente=vente, client=client, voiture=voiture, agent=agent, facture=facture)
+
+@app.route('/ventes/delete/<int:id_vente>', methods=['POST'])
+@admin_required
+def vente_delete(id_vente):
+    db = get_db()
+    cur = db.cursor()
+    # Restore the car status to en_stock
+    cur.execute('SELECT vin FROM ligne_vente WHERE id_vente=?', (id_vente,))
+    ligne = cur.fetchone()
+    if ligne:
+        cur.execute("UPDATE voiture SET statut='en_stock' WHERE vin=?", (ligne['vin'],))
+    # Delete in cascade order: paiement -> facture -> ligne_vente -> vente
+    cur.execute('DELETE FROM paiement WHERE id_facture IN (SELECT id_facture FROM facture WHERE id_vente=?)', (id_vente,))
+    cur.execute('DELETE FROM facture WHERE id_vente=?', (id_vente,))
+    cur.execute('DELETE FROM ligne_vente WHERE id_vente=?', (id_vente,))
+    cur.execute('DELETE FROM vente WHERE id_vente=?', (id_vente,))
+    db.commit()
+    flash('Vente annulée. Le véhicule est remis en stock.', 'success')
+    return redirect(url_for('transactions'))
+
 
 def open_browser():
     try:
