@@ -433,24 +433,26 @@ def marque_detail(id_marque):
     if not marque:
         return redirect(url_for('marques'))
     is_client = g.user and g.user['role'] == 'user'
-    if is_client:
-        cur.execute('''
+    stock_filter = 'AND v.statut = \'en_stock\'' if is_client else ''
+    try:
+        cur.execute(f'''
             SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
                    v.statut, m.nom_modele, mq.nom_marque, m.image_url
             FROM voiture v
             JOIN modele m ON v.id_modele = m.id_modele
             JOIN marque mq ON m.id_marque = mq.id_marque
-            WHERE mq.id_marque = ? AND v.statut = 'en_stock'
+            WHERE mq.id_marque = ? {stock_filter}
             ORDER BY v.annee DESC, v.prix_vente DESC
         ''', (id_marque,))
-    else:
-        cur.execute('''
+    except Exception:
+        # image_url column not yet added — run update_models.py to add it
+        cur.execute(f'''
             SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
-                   v.statut, m.nom_modele, mq.nom_marque, m.image_url
+                   v.statut, m.nom_modele, mq.nom_marque, NULL as image_url
             FROM voiture v
             JOIN modele m ON v.id_modele = m.id_modele
             JOIN marque mq ON m.id_marque = mq.id_marque
-            WHERE mq.id_marque = ?
+            WHERE mq.id_marque = ? {stock_filter}
             ORDER BY v.annee DESC, v.prix_vente DESC
         ''', (id_marque,))
     voitures = cur.fetchall()
