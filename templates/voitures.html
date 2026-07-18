@@ -30,13 +30,37 @@
         <button class="filter-chip" data-filter="type" data-val="neuf">Neuf</button>
         <button class="filter-chip" data-filter="type" data-val="occasion">Occasion</button>
     </div>
+    <!-- Filtres prix & année -->
+    <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;width:100%;padding-top:0.75rem;border-top:1px solid var(--border-color);">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-money' style="color:var(--text-muted);font-size:1.1rem;"></i>
+            <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">Prix (MAD) :</span>
+            <input type="number" id="prix-min" placeholder="Min" min="0" step="1000"
+                   style="width:100px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+            <span style="color:var(--text-muted);">—</span>
+            <input type="number" id="prix-max" placeholder="Max" min="0" step="1000"
+                   style="width:100px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-calendar' style="color:var(--text-muted);font-size:1.1rem;"></i>
+            <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">Année :</span>
+            <input type="number" id="annee-min" placeholder="De" min="1990" max="2030"
+                   style="width:80px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+            <span style="color:var(--text-muted);">—</span>
+            <input type="number" id="annee-max" placeholder="À" min="1990" max="2030"
+                   style="width:80px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+        </div>
+        <button onclick="resetFilters()" style="font-size:0.78rem;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;">
+            Réinitialiser
+        </button>
+    </div>
 </div>
 
 <div class="table-container">
     <table id="voitures-table">
         <thead>
             <tr>
-                <th>Marque & Modèle</th>
+                <th>Marque &amp; Modèle</th>
                 <th>Type</th>
                 <th>Immatriculation</th>
                 <th>Année</th>
@@ -48,7 +72,8 @@
         <tbody>
             {% for voiture in voitures %}
             <tr data-statut="{{ voiture.statut }}" data-type="{{ voiture.type }}"
-                data-search="{{ voiture.nom_marque|lower }} {{ voiture.nom_modele|lower }} {{ voiture.immatriculation|lower }} {{ voiture.vin|lower }}">
+                data-search="{{ voiture.nom_marque|lower }} {{ voiture.nom_modele|lower }} {{ voiture.immatriculation|lower }} {{ voiture.vin|lower }}"
+                data-prix="{{ voiture.prix_vente }}" data-annee="{{ voiture.annee }}">
                 <td>
                     <a href="{{ url_for('voiture_detail', vin=voiture.vin) }}"
                        style="font-weight:600;color:var(--accent-gold);text-decoration:none;">
@@ -143,6 +168,10 @@
 
 <script>
 const searchInput = document.getElementById('search-input');
+const prixMinInput = document.getElementById('prix-min');
+const prixMaxInput = document.getElementById('prix-max');
+const anneeMinInput = document.getElementById('annee-min');
+const anneeMaxInput = document.getElementById('annee-max');
 let activeStatut = 'all';
 let activeType = 'all';
 
@@ -157,20 +186,50 @@ document.querySelectorAll('.filter-chip').forEach(btn => {
     });
 });
 
-searchInput.addEventListener('input', applyFilters);
+[searchInput, prixMinInput, prixMaxInput, anneeMinInput, anneeMaxInput].forEach(el => {
+    el.addEventListener('input', applyFilters);
+});
 
 function applyFilters() {
     const q = searchInput.value.toLowerCase();
+    const prixMin = prixMinInput.value !== '' ? parseFloat(prixMinInput.value) : null;
+    const prixMax = prixMaxInput.value !== '' ? parseFloat(prixMaxInput.value) : null;
+    const anneeMin = anneeMinInput.value !== '' ? parseInt(anneeMinInput.value) : null;
+    const anneeMax = anneeMaxInput.value !== '' ? parseInt(anneeMaxInput.value) : null;
+
     let visible = 0;
     document.querySelectorAll('#voitures-table tbody tr[data-statut]').forEach(row => {
-        const matchSearch = row.dataset.search.includes(q);
-        const matchStatut = activeStatut === 'all' || row.dataset.statut === activeStatut;
-        const matchType = activeType === 'all' || row.dataset.type === activeType;
-        const show = matchSearch && matchStatut && matchType;
+        const prix = parseFloat(row.dataset.prix);
+        const annee = parseInt(row.dataset.annee);
+
+        const show =
+            row.dataset.search.includes(q) &&
+            (activeStatut === 'all' || row.dataset.statut === activeStatut) &&
+            (activeType === 'all' || row.dataset.type === activeType) &&
+            (prixMin === null || prix >= prixMin) &&
+            (prixMax === null || prix <= prixMax) &&
+            (anneeMin === null || annee >= anneeMin) &&
+            (anneeMax === null || annee <= anneeMax);
+
         row.style.display = show ? '' : 'none';
         if (show) visible++;
     });
     document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function resetFilters() {
+    searchInput.value = '';
+    prixMinInput.value = '';
+    prixMaxInput.value = '';
+    anneeMinInput.value = '';
+    anneeMaxInput.value = '';
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.val === 'all') btn.classList.add('active');
+    });
+    activeStatut = 'all';
+    activeType = 'all';
+    applyFilters();
 }
 </script>
 {% endblock %}
