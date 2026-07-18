@@ -168,17 +168,12 @@ def init_db():
             FOREIGN KEY (id_client) REFERENCES client(id_client)
         );
 
-        CREATE TABLE IF NOT EXISTS devis (
-            id_devis INTEGER PRIMARY KEY AUTOINCREMENT,
-            vin TEXT NOT NULL,
-            id_client INTEGER NOT NULL,
-            date_devis DATE NOT NULL,
-            prix_vente REAL NOT NULL,
-            devis_num TEXT NOT NULL,
-            FOREIGN KEY (vin) REFERENCES voiture(vin),
-            FOREIGN KEY (id_client) REFERENCES client(id_client)
-        );
     ''')
+    # Safety: add image_url to modele for existing installs that pre-date this column
+    try:
+        db.execute("ALTER TABLE modele ADD COLUMN image_url TEXT")
+    except Exception:
+        pass  # Column already exists — safe to ignore
     db.commit()
     # Seed the default admin account if not present
     existing = db.execute("SELECT id_user FROM user WHERE username = 'admin'").fetchone()
@@ -359,12 +354,6 @@ def voitures():
     db = get_db()
     cur = db.cursor()
     cur.execute('''
-    # Safety: add image_url to modele if missing (for existing installs)
-    try:
-        db.execute("ALTER TABLE modele ADD COLUMN image_url TEXT")
-        db.commit()
-    except Exception:
-        pass  # Column already exists
         SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_vente, v.statut, m.nom_modele, mq.nom_marque
         FROM voiture v
         JOIN modele m ON v.id_modele = m.id_modele
