@@ -3,67 +3,127 @@
 {% block page_title %}Mes Devis{% endblock %}
 
 {% block content %}
+<style>
+  .devis-wrap {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow-x: auto;
+    width: 100%;
+  }
+  .devis-wrap table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+  .devis-wrap th, .devis-wrap td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+  .devis-wrap th {
+    background: rgba(0,0,0,0.2);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .devis-wrap tr:last-child td { border-bottom: none; }
+  .devis-wrap tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .col-ref   { width: 10%; }
+  .col-date  { width: 10%; }
+  .col-car   { width: 22%; white-space: normal !important; }
+  .col-type  { width: 8%; }
+  .col-immat { width: 13%; }
+  .col-prix  { width: 15%; }
+  .col-statut{ width: 12%; }
+  .col-act   { width: 10%; }
+
+  .prix-block { line-height: 1.6; }
+  .prix-ht  { font-size: 0.8rem; color: var(--text-muted); }
+  .prix-ttc { font-weight: 700; color: var(--accent-gold); font-size: 0.92rem; }
+</style>
+
 <div class="header-actions" style="margin-bottom:1.5rem;">
-    <h2 style="font-weight:600;font-size:1.25rem;">Historique de mes demandes de devis</h2>
-    <a href="{{ url_for('marques') }}" class="btn"><i class='bx bx-purchase-tag-alt'></i> Voir les Marques</a>
+  <h2 style="font-weight:600;font-size:1.2rem;">Historique de mes demandes de devis</h2>
+  <a href="{{ url_for('marques') }}" class="btn" style="font-size:0.85rem;padding:0.6rem 1.2rem;">
+    <i class='bx bx-purchase-tag-alt'></i> Voir les Marques
+  </a>
 </div>
 
-<div class="table-container">
-    {% if devis_list %}
-    <table>
-        <thead>
-            <tr>
-                <th>N° Devis</th>
-                <th>Date</th>
-                <th>Véhicule</th>
-                <th>Type</th>
-                <th>Immatriculation</th>
-                <th>Prix HT</th>
-                <th>Prix TTC</th>
-                <th>Statut Voiture</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for d in devis_list %}
-            <tr>
-                <td style="font-family:monospace;font-size:0.82rem;color:var(--text-muted);">DEV-{{ d.devis_num }}</td>
-                <td>{{ d.date_devis }}</td>
-                <td style="font-weight:600;">{{ d.nom_marque }} {{ d.nom_modele }}</td>
-                <td><span class="badge {{ d.type }}">{{ d.type|capitalize }}</span></td>
-                <td>{{ d.immatriculation }}</td>
-                <td>{{ "{:,.0f}".format(d.prix_vente) }} MAD</td>
-                <td style="font-weight:700;color:var(--accent-gold);">{{ "{:,.0f}".format(d.prix_vente * 1.2) }} MAD</td>
-                <td>
-                    {% if d.statut == 'en_stock' %}
-                    <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);">Disponible</span>
-                    {% elif d.statut == 'reservee' %}
-                    <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">Réservée</span>
-                    {% else %}
-                    <span class="badge" style="background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);">Vendue</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if d.statut == 'en_stock' %}
-                    <a href="{{ url_for('client_devis', vin=d.vin) }}" class="btn" style="padding:4px 12px;font-size:0.8rem;">
-                        <i class='bx bx-file'></i> Revoir Devis
-                    </a>
-                    {% else %}
-                    <span style="color:var(--text-muted);font-size:0.82rem;">Non disponible</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div style="padding:4rem;text-align:center;color:var(--text-muted);">
-        <i class='bx bx-file-blank' style="font-size:4rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
-        <p style="font-size:1.05rem;">Vous n'avez pas encore demandé de devis.</p>
-        <a href="{{ url_for('marques') }}" class="btn" style="margin-top:1.5rem;display:inline-flex;">
-            <i class='bx bx-purchase-tag-alt'></i>&nbsp; Explorer les marques
-        </a>
-    </div>
-    {% endif %}
+<div class="devis-wrap">
+  {% if devis_list %}
+  <table>
+    <colgroup>
+      <col class="col-ref">
+      <col class="col-date">
+      <col class="col-car">
+      <col class="col-type">
+      <col class="col-immat">
+      <col class="col-prix">
+      <col class="col-statut">
+      <col class="col-act">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>N° Devis</th>
+        <th>Date</th>
+        <th>Véhicule</th>
+        <th>Type</th>
+        <th>Immatriculation</th>
+        <th>Prix</th>
+        <th>Statut</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in devis_list %}
+      <tr>
+        <td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);">DEV-{{ d.devis_num }}</td>
+        <td style="font-size:0.85rem;">{{ d.date_devis }}</td>
+        <td style="font-weight:600;white-space:normal;">{{ d.nom_marque }} {{ d.nom_modele }}</td>
+        <td><span class="badge {{ d.type }}">{{ d.type|capitalize }}</span></td>
+        <td style="font-family:monospace;font-size:0.82rem;">{{ d.immatriculation }}</td>
+        <td>
+          <div class="prix-block">
+            <div class="prix-ht">{{ "{:,.0f}".format(d.prix_vente) }} HT</div>
+            <div class="prix-ttc">{{ "{:,.0f}".format(d.prix_vente * 1.2) }} TTC</div>
+          </div>
+        </td>
+        <td>
+          {% if d.statut == 'en_stock' %}
+          <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);">Disponible</span>
+          {% elif d.statut == 'reservee' %}
+          <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">Réservée</span>
+          {% else %}
+          <span class="badge" style="background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);">Vendue</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if d.statut == 'en_stock' %}
+          <a href="{{ url_for('client_devis', vin=d.vin) }}" class="btn" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">
+            <i class='bx bx-file'></i> Revoir
+          </a>
+          {% else %}
+          <span style="color:var(--text-muted);font-size:0.8rem;">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:4rem;text-align:center;color:var(--text-muted);">
+    <i class='bx bx-file-blank' style="font-size:4rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
+    <p style="font-size:1.05rem;">Vous n'avez pas encore demandé de devis.</p>
+    <a href="{{ url_for('marques') }}" class="btn" style="margin-top:1.5rem;display:inline-flex;align-items:center;gap:6px;">
+      <i class='bx bx-purchase-tag-alt'></i> Explorer les marques
+    </a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
