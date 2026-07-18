@@ -49,6 +49,13 @@
         </div>
         <div class="stat-value" style="font-size:1.1rem;">{{ "{:,.0f}".format(chiffre_affaires) }} <span style="font-size:0.7rem;color:var(--text-muted);">MAD</span></div>
     </div>
+    <div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-dollar-circle' style="font-size:1.8rem;color:#10b981;"></i>
+            <span class="stat-title">Marge Brute</span>
+        </div>
+        <div class="stat-value" style="font-size:1.1rem;color:#10b981;">{{ "{:,.0f}".format(marge_totale) }} <span style="font-size:0.7rem;color:var(--text-muted);">MAD</span></div>
+    </div>
 </div>
 
 <!-- Chart + Recent Activity -->
