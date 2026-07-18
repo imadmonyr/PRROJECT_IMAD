@@ -94,101 +94,81 @@ These changes affect your MCD (Modèle Conceptuel de Données) and MLD
    │ BMW            │ M5 G90, i7 xDrive60, X5 M Competition   │
    │ Audi           │ R8 V10 Plus, e-tron GT RS, SQ8 TFSI     │
    │ Porsche        │ Taycan Turbo S, Macan GTS, 718 Spyder RS │
-   │ Ferrari        │ Purosangue, 296 GTB, F8 Tributo          │
-   │ Lamborghini    │ Revuelto, Sterrato, Urus S               │
-   │ Range Rover    │ Range Rover Sport SV, Velar R-Dynamic SE,│
-   │                │ Discovery P360                           │
-   │ Maserati       │ MC20, GranTurismo Folgore, Levante Trofeo│
+   │ Ferrari        │ SF90 XX Stradale, 296 GTB, Roma Spider   │
+   │ Lamborghini    │ Revuelto, Urus SE, Huracán Sterrato      │
+   │ Bentley        │ Continental GT Speed, Bentayga EWB, Flying Spur S │
+   │ Rolls-Royce    │ Spectre, Ghost Black Badge, Cullinan Series II │
    └────────────────┴──────────────────────────────────────────┘
 
-   Note: These are MODEL entries (in the modele table) only.
-   They are NOT voitures — no cars have been added to the inventory.
-   A model is just a catalog entry; a voiture is a real car with VIN, plate, price, etc.
 
-HOW TO APPLY THE DATABASE CHANGES TO YOUR LOCAL FILE:
-  Run this ONE time in cmd (with venv active):
-    python update_models.py
-  This script: adds the image_url column, sets photos for existing models,
-  and inserts the 24 new model entries. It is safe to run multiple times.
+FEATURES IMPLEMENTED
+--------------------
+The following features have been fully implemented. This list is the source of truth
+for what the app can and cannot do.
 
+✅ 1. Edit & Delete cars
+   Routes: /voitures/edit/<vin>  (GET/POST)
+           /voitures/delete/<vin> (POST)
+   Files:  templates/voiture_edit.html, app.py
 
-APP PAGES (routes in app.py)
------------------------------
-ADMIN ROUTES (require admin login):
-  /                   → Dashboard (stats: cars, sales, clients)
-  /voitures/add       → Add a new car
-  /clients            → Client management (CRUD)
-  /agents             → Agent management (CRUD)
-  /fournisseurs       → Supplier management (CRUD)
-  /transactions       → Sales & purchases history
-  /ventes/add         → Record a new sale
-  /achats/add         → Record a new purchase
-  /devis/select       → Select car + client for a quote
-  /devis/<vin>/<id>   → Generate quote (PDF-ready, admin version)
-  /confirmation/<id>  → Bon de confirmation for a sale
+✅ 2. Search & filter on voitures list (text search)
+   Filter by: brand, model, plate, VIN (text search)
+              status chips: Tous / En Stock / Réservées / Vendues
+              type chips:   Tous types / Neuf / Occasion
+   Implementation: client-side JS in templates/voitures.html
+   No backend change needed.
 
-SHARED ROUTES (admin + client):
-  /voitures           → Car inventory list (all cars for admin, available only for client)
-  /marques            → Brands page (admin sees Add button; client sees brands only)
-  /marques/<id>       → Brand detail — admin sees all cars; client sees en_stock only
-  /login              → Login page
-  /signup             → Signup page (creates client account)
+✅ 3. Client "Mes Devis" page
+   Route: /client/mes-devis
+   Shows the logged-in client's full quote history (date, vehicle, price HT/TTC, status).
+   Devis are saved to the devis table on each request.
+   Files: templates/mes_devis.html, app.py
 
-CLIENT-ONLY ROUTES:
-  /client/devis/<vin> → Generates a printable devis (quote) for that car,
-                        using the logged-in client's info automatically.
-                        Does NOT finalize the sale — it is just a quote document.
+✅ 4. Edit & Delete clients, agents, suppliers
+   Routes: /clients/edit/<id>       /clients/delete/<id>
+           /agents/edit/<id>        /agents/delete/<id>
+           /fournisseurs/edit/<id>  /fournisseurs/delete/<id>
+   Files:  templates/client_edit.html, templates/agent_edit.html,
+           templates/fournisseur_edit.html, app.py
 
+✅ 5. Monthly sales chart on dashboard
+   Dashboard fetches last 12 months of sales (count + revenue per month).
+   Data passed to index.html as JSON (chart_labels, chart_ventes, chart_ca).
+   Rendered with Chart.js canvas.
+   Files: templates/index.html, app.py (dashboard route)
 
-ESSENTIAL FILES (keep these)
------------------------------
-app.py              → Main Flask application — all routes and logic
-database.db         → The SQLite database — all data lives here
-requirements.txt    → Python package dependencies
-schema.sql          → SQL to recreate all tables from scratch (backup)
-seed_data.py        → Seeds test data into the database
-update_models.py    → Migration script (run once): adds image_url column + new models
-templates/          → All HTML pages (Jinja2 templates)
-static/             → CSS (style.css) + brand SVG logos folder
-venv/               → Python virtual environment with all installed packages
+✅ 6. Car detail page
+   Route: /voitures/<vin>
+   Shows full car info. Admin sees Edit / Delete buttons.
+   Files: templates/voiture_detail.html, app.py
 
+✅ 7. Filter cars by price range, year, and type
+   Price range: Min / Max MAD number inputs (filters as you type)
+   Year range:  De / À number inputs (filters as you type)
+   Type:        Neuf / Occasion chips (already existed)
+   Reset button clears all filters at once.
+   Implementation: client-side JS — no backend change, no Python change.
+   All filters combine: search + status + type + price range + year range all work together.
+   Files: templates/voitures.html
+          (rows now carry data-prix and data-annee attributes)
 
-FILES/FOLDERS TO REMOVE (useless clutter — not urgent, do when you have time)
-------------------------------------------------------------------------------
-__pycache__/                    → Auto-generated Python cache, always safe to delete
-build/                          → PyInstaller build artifacts, not needed
-dist/                           → PyInstaller distribution folder, not needed
-app.spec                        → PyInstaller config file, not needed
-error_log.txt                   → Old error log, not needed
-out.txt                         → Old output log, not needed
-LuxeDrive_Application.exe       → Old compiled version v1
-LuxeDrive_Application_v2.exe    → Old compiled version v2
-LuxeDrive_Application_v3.exe    → Old compiled version v3
-LuxeDrive_Application_v4.exe    → Old compiled version v4
-LuxeDrive_Application_v5.exe    → Old compiled version v5
-LuxeDrive_Application_v6.exe    → Old compiled version v6
-LuxeDrive_Application_v7.exe    → Old compiled version v7
-LuxeDrive_Application_v8.exe    → Old compiled version v8
-LuxeDrive_Application_v9.exe    → Old compiled version v9
+✅ 8. My Account page for clients
+   Route: /client/mon-compte  (GET/POST)
+   Clients can view and update their name, phone, email.
+   Files: templates/mon_compte.html, app.py
+
+✅ 9. Print-ready invoice (facture) after a sale
+   Route: /confirmation/<id_vente>
+   Shown after admin records a sale. Includes facture data.
+   Files: templates/confirmation.html, app.py
+
+❌ Password hashing — NOT implemented (out of scope for local project).
+   Passwords are stored and compared as plain text. Acceptable for a local school project.
 
 
-GITHUB SITUATION
-----------------
-The GitHub repo (https://github.com/imadmonyr/PRROJECT_IMAD) is NOT a full copy.
-It only contains the files that affect the core logic and structure:
-  app.py, database.db, requirements.txt, schema.sql, seed_data.py,
-  templates/, static/
-
-Changes made by this agent are pushed to GitHub using a PAT token.
-To apply GitHub changes to the local folder: manually copy the changed files
-(git pull does NOT work cleanly since the local folder has many more files
-than what's tracked in git).
-
-
-CHANGES LOG
------------
-
-[July 2026 — Change 1] Fix "Nouvel Achat" button
+CHANGELOG
+---------
+[July 2026 — Change 1] "Nouvel Achat" button fix + purchase order flow
   Problem: "Nouvel Achat" button in Ventes & Achats page was broken (href="#")
   Files changed:
     - templates/achat_add.html         (new file)
@@ -219,6 +199,20 @@ CHANGES LOG
     - Signup redirect: was /voitures → now /marques
   DB impact: None (reads existing data, no schema change)
 
+[July 2026 — Change 4] Price range & year filters on voitures list
+  Problem: No way to filter cars by price or year — list was unsearchable once large
+  Files changed:
+    - templates/voitures.html          (filter UI + updated JS applyFilters function)
+  What was added:
+    - Price range inputs (Min / Max MAD) inside the filter bar
+    - Year range inputs (De / À) inside the filter bar
+    - "Réinitialiser" button that clears all filters at once
+    - data-prix and data-annee attributes on each <tr> row
+    - Updated applyFilters() to combine all 6 filter dimensions simultaneously:
+      text search + status chip + type chip + prix min + prix max + annee min + annee max
+  App.py changes: None (purely client-side, no backend change needed)
+  DB impact: None
+
 
 TECH STACK
 ----------
@@ -238,4 +232,5 @@ AGENT NOTES
 - Moroccan license plate format is validated in the voitures_add form
 - update_models.py must be run locally to apply DB changes (image_url column + new models)
 - MCD/MLD need updating to reflect image_url column on the modele table
+- All voitures.html filters are client-side JS — no Flask route changes needed for filtering
 ====================================================
