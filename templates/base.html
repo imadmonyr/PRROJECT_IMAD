@@ -19,7 +19,9 @@
             {% endif %}
 
             <li><a href="{{ url_for('marques') }}" class="{% if request.endpoint in ['marques','marque_detail'] %}active{% endif %}"><i class='bx bx-purchase-tag-alt'></i> Marques</a></li>
+            {% if g.user and g.user.role == 'admin' %}
             <li><a href="{{ url_for('voitures') }}" class="{% if request.endpoint in ['voitures','voitures_add','voiture_detail','voiture_edit'] %}active{% endif %}"><i class='bx bx-car'></i> Voitures</a></li>
+            {% endif %}
 
             {% if g.user and g.user.role == 'admin' %}
             <li><a href="{{ url_for('clients') }}" class="{% if request.endpoint in ['clients','client_edit'] %}active{% endif %}"><i class='bx bx-user'></i> Clients</a></li>
