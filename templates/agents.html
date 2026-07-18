@@ -1,70 +1,71 @@
 {% extends 'base.html' %}
-
 {% block title %}Agents - LuxeDrive{% endblock %}
 {% block page_title %}Gestion des Agents{% endblock %}
 
 {% block content %}
-<div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+<div style="display:grid;grid-template-columns:1fr 350px;gap:2rem;">
     <div class="table-container">
-        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: 1.1rem; font-weight: 600;">Liste des Agents</h2>
-            <button onclick="window.print()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #475569;"><i class='bx bx-printer'></i> Imprimer</button>
+        <div style="padding:1.5rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="font-size:1.1rem;font-weight:600;">Liste des Agents</h2>
+            <button onclick="window.print()" class="btn" style="padding:0.5rem 1rem;font-size:0.85rem;background:#475569;"><i class='bx bx-printer'></i> Imprimer</button>
         </div>
         <table>
             <thead>
                 <tr>
                     <th>Nom Complet</th>
                     <th>Téléphone</th>
-                    <th>Email</th>
                     <th>Taux Commission</th>
                     <th>Commissions Gagnées</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for agent in agents %}
                 <tr>
-                    <td style="font-weight: 500;">{{ agent.prenom }} {{ agent.nom }}</td>
+                    <td>
+                        <div style="font-weight:500;">{{ agent.prenom }} {{ agent.nom }}</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted);">{{ agent.email }}</div>
+                    </td>
                     <td>{{ agent.telephone }}</td>
-                    <td style="color: var(--text-muted);">{{ agent.email }}</td>
-                    <td style="font-weight: 600;">{{ agent.taux_commission }}%</td>
-                    <td style="font-weight: 600; color: var(--success);">
-                        {% if agent.total_gagne %}{{ "{:,.2f}".format(agent.total_gagne) }} MAD{% else %}0.00 MAD{% endif %}
+                    <td style="font-weight:600;">{{ agent.taux_commission }}%</td>
+                    <td style="font-weight:600;color:var(--success);">
+                        {% if agent.total_gagne %}{{ "{:,.0f}".format(agent.total_gagne) }} MAD{% else %}0 MAD{% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ url_for('agent_edit', id_agent=agent.id_agent) }}" class="btn-action btn-edit" title="Modifier"><i class='bx bx-edit'></i></a>
+                            <form action="{{ url_for('agent_delete', id_agent=agent.id_agent) }}" method="POST" style="margin:0;"
+                                  onsubmit="return confirm('Supprimer cet agent ?');">
+                                <button type="submit" class="btn-action btn-delete" title="Supprimer"><i class='bx bx-trash'></i></button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">Aucun agent trouvé.</td>
-                </tr>
+                <tr><td colspan="5" style="text-align:center;padding:3rem;color:var(--text-muted);">Aucun agent trouvé.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <div class="form-container" style="height: fit-content; padding: 1.5rem;">
-        <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem;">Nouvel Agent</h2>
+    <div class="form-container" style="height:fit-content;padding:1.5rem;">
+        <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;">Nouvel Agent</h2>
         <form method="POST" action="{{ url_for('agents') }}">
-            <div class="form-group">
-                <label for="nom">Nom</label>
-                <input type="text" id="nom" name="nom" required>
-            </div>
-            <div class="form-group">
-                <label for="prenom">Prénom</label>
-                <input type="text" id="prenom" name="prenom" required>
-            </div>
-            <div class="form-group">
-                <label for="telephone">Téléphone</label>
-                <input type="text" id="telephone" name="telephone" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email">
-            </div>
-            <div class="form-group">
-                <label for="taux_commission">Taux de Commission (%)</label>
-                <input type="number" id="taux_commission" name="taux_commission" step="0.01" min="0" max="100" required>
-            </div>
-            <button type="submit" class="btn" style="width: 100%;"><i class='bx bx-user-plus'></i> Ajouter Agent</button>
+            <div class="form-group"><label>Nom</label><input type="text" name="nom" required></div>
+            <div class="form-group"><label>Prénom</label><input type="text" name="prenom" required></div>
+            <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" required></div>
+            <div class="form-group"><label>Email</label><input type="email" name="email"></div>
+            <div class="form-group"><label>Taux Commission (%)</label><input type="number" name="taux_commission" step="0.01" min="0" max="100" required></div>
+            <button type="submit" class="btn" style="width:100%;"><i class='bx bx-user-plus'></i> Ajouter Agent</button>
         </form>
     </div>
 </div>
+
+<style>
+.btn-action { display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);text-decoration:none;cursor:pointer;transition:all 0.2s;font-size:1rem; }
+.btn-edit { background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3); }
+.btn-edit:hover { background:rgba(59,130,246,0.2); }
+.btn-delete { background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.3); }
+.btn-delete:hover { background:rgba(239,68,68,0.2); }
+</style>
 {% endblock %}

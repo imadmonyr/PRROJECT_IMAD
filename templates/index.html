@@ -1,31 +1,156 @@
 {% extends 'base.html' %}
-
 {% block title %}Tableau de Bord - LuxeDrive{% endblock %}
 {% block page_title %}Tableau de bord{% endblock %}
 
 {% block content %}
-<div class="dashboard-grid">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Stat Cards -->
+<div class="dashboard-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;">
     <div class="stat-card">
-        <div class="stat-title">Total Voitures en Stock</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-car' style="font-size:1.8rem;color:var(--accent-gold);"></i>
+            <span class="stat-title">En Stock</span>
+        </div>
         <div class="stat-value">{{ total_voitures }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-title">Total Clients</div>
-        <div class="stat-value">{{ total_clients }}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-badge-check' style="font-size:1.8rem;color:#10b981;"></i>
+            <span class="stat-title">Vendues</span>
+        </div>
+        <div class="stat-value" style="color:#10b981;">{{ total_vendues }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-title">Total Ventes</div>
-        <div class="stat-value">{{ total_ventes }}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-time' style="font-size:1.8rem;color:#f59e0b;"></i>
+            <span class="stat-title">Réservées</span>
+        </div>
+        <div class="stat-value" style="color:#f59e0b;">{{ total_reservees }}</div>
+    </div>
+    <div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-user' style="font-size:1.8rem;color:#3b82f6;"></i>
+            <span class="stat-title">Clients</span>
+        </div>
+        <div class="stat-value" style="color:#3b82f6;">{{ total_clients }}</div>
+    </div>
+    <div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-receipt' style="font-size:1.8rem;color:#a78bfa;"></i>
+            <span class="stat-title">Total Ventes</span>
+        </div>
+        <div class="stat-value" style="color:#a78bfa;">{{ total_ventes }}</div>
+    </div>
+    <div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <i class='bx bx-trending-up' style="font-size:1.8rem;color:var(--accent-gold);"></i>
+            <span class="stat-title">Chiffre d'affaires</span>
+        </div>
+        <div class="stat-value" style="font-size:1.1rem;">{{ "{:,.0f}".format(chiffre_affaires) }} <span style="font-size:0.7rem;color:var(--text-muted);">MAD</span></div>
     </div>
 </div>
 
-<div class="table-container">
-    <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="font-size: 1.1rem; font-weight: 600;">Dernières Activités</h2>
+<!-- Chart + Recent Activity -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <!-- Monthly Sales Chart -->
+    <div class="table-container" style="padding:1.5rem;">
+        <h2 style="font-size:1rem;font-weight:600;margin-bottom:1.2rem;color:var(--text-main);">
+            <i class='bx bx-bar-chart-alt-2' style="color:var(--accent-gold);margin-right:6px;"></i>Ventes par Mois
+        </h2>
+        {% if chart_labels != '[]' %}
+        <canvas id="salesChart" height="220"></canvas>
+        {% else %}
+        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+            <i class='bx bx-bar-chart' style="font-size:3rem;opacity:0.3;"></i>
+            <p style="margin-top:1rem;">Aucune donnée de vente pour le moment.</p>
+        </div>
+        {% endif %}
     </div>
-    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
-        <i class='bx bx-time' style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-        <p>Aucune activité récente à afficher.</p>
+
+    <!-- CA Chart -->
+    <div class="table-container" style="padding:1.5rem;">
+        <h2 style="font-size:1rem;font-weight:600;margin-bottom:1.2rem;color:var(--text-main);">
+            <i class='bx bx-line-chart' style="color:var(--accent-gold);margin-right:6px;"></i>Chiffre d'Affaires par Mois (MAD)
+        </h2>
+        {% if chart_labels != '[]' %}
+        <canvas id="caChart" height="220"></canvas>
+        {% else %}
+        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+            <i class='bx bx-line-chart' style="font-size:3rem;opacity:0.3;"></i>
+            <p style="margin-top:1rem;">Aucune donnée pour le moment.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Recent Activity -->
+<div class="table-container">
+    <div style="padding:1.5rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="font-size:1.1rem;font-weight:600;"><i class='bx bx-time' style="color:var(--accent-gold);margin-right:6px;"></i>Dernières Ventes</h2>
+        <a href="{{ url_for('transactions') }}" style="color:var(--accent-gold);font-size:0.85rem;text-decoration:none;">Voir tout →</a>
+    </div>
+    {% if activites %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Véhicule</th>
+                <th>Prix TTC</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in activites %}
+            <tr>
+                <td style="color:var(--text-muted);font-size:0.85rem;">{{ a.date_vente }}</td>
+                <td style="font-weight:500;">{{ a.client_nom }}</td>
+                <td>{{ a.voiture_nom }}</td>
+                <td style="font-weight:600;color:var(--accent-gold);">{{ "{:,.0f}".format(a.prix_vente * 1.2) }} MAD</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="padding:3rem;text-align:center;color:var(--text-muted);">
+        <i class='bx bx-time' style="font-size:3rem;opacity:0.3;"></i>
+        <p style="margin-top:1rem;">Aucune vente enregistrée.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const labels = {{ chart_labels|safe }};
+const ventesData = {{ chart_ventes|safe }};
+const caData = {{ chart_ca|safe }};
+
+if (labels.length > 0) {
+    const chartDefaults = {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+        }
+    };
+
+    new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ data: ventesData, backgroundColor: 'rgba(212,175,55,0.7)', borderColor: '#D4AF37', borderWidth: 1, borderRadius: 6 }]
+        },
+        options: { ...chartDefaults }
+    });
+
+    new Chart(document.getElementById('caChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{ data: caData, borderColor: '#990000', backgroundColor: 'rgba(153,0,0,0.1)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#990000', pointRadius: 4 }]
+        },
+        options: { ...chartDefaults }
+    });
+}
+</script>
 {% endblock %}

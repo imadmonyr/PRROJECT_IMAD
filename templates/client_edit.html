@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Modifier Client - LuxeDrive{% endblock %}
+{% block page_title %}Modifier Client{% endblock %}
+
+{% block content %}
+<div class="header-actions" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('clients') }}" class="btn" style="background:var(--sidebar-bg);border:1px solid var(--border-color);">
+        <i class='bx bx-arrow-back'></i> Retour
+    </a>
+</div>
+<div class="form-container" style="max-width:500px;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;">Modifier : {{ client.prenom }} {{ client.nom }}</h2>
+    <form method="POST" action="{{ url_for('client_edit', id_client=client.id_client) }}">
+        <div class="form-group"><label>Nom</label><input type="text" name="nom" value="{{ client.nom }}" required></div>
+        <div class="form-group"><label>Prénom</label><input type="text" name="prenom" value="{{ client.prenom }}" required></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="{{ client.telephone }}"></div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" value="{{ client.email }}"></div>
+        <div style="margin-top:1.5rem;text-align:right;">
+            <button type="submit" class="btn"><i class='bx bx-save'></i> Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

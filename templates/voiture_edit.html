@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Modifier - {{ voiture.nom_marque }} {{ voiture.nom_modele }}{% endblock %}
+{% block page_title %}Modifier Véhicule{% endblock %}
+
+{% block content %}
+<div class="header-actions" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('voiture_detail', vin=voiture.vin) }}" class="btn" style="background:var(--sidebar-bg);border:1px solid var(--border-color);">
+        <i class='bx bx-arrow-back'></i> Retour
+    </a>
+</div>
+
+<div class="form-container">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;color:var(--accent-gold);">
+        Modifier : {{ voiture.nom_marque }} {{ voiture.nom_modele }}
+        <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400;font-family:monospace;"> — {{ voiture.vin }}</span>
+    </h2>
+    <form method="POST" action="{{ url_for('voiture_edit', vin=voiture.vin) }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Marque & Modèle</label>
+                <select name="id_modele" required>
+                    {% for m in modeles %}
+                    <option value="{{ m.id_modele }}" {% if m.id_modele == voiture.id_modele %}selected{% endif %}>
+                        {{ m.nom_marque }} {{ m.nom_modele }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>État</label>
+                <select name="type" required>
+                    <option value="neuf" {% if voiture.type == 'neuf' %}selected{% endif %}>Neuf</option>
+                    <option value="occasion" {% if voiture.type == 'occasion' %}selected{% endif %}>Occasion</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Immatriculation</label>
+                <input type="text" name="immatriculation" value="{{ voiture.immatriculation }}" required>
+            </div>
+            <div class="form-group">
+                <label>Année</label>
+                <input type="number" name="annee" value="{{ voiture.annee }}" min="1900" max="2099" required>
+            </div>
+            <div class="form-group">
+                <label>Statut</label>
+                <select name="statut" required>
+                    <option value="en_stock" {% if voiture.statut == 'en_stock' %}selected{% endif %}>En Stock</option>
+                    <option value="reservee" {% if voiture.statut == 'reservee' %}selected{% endif %}>Réservée</option>
+                    <option value="vendue" {% if voiture.statut == 'vendue' %}selected{% endif %}>Vendue</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Prix d'Achat (MAD)</label>
+                <input type="number" name="prix_achat" value="{{ voiture.prix_achat }}" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label>Prix de Vente (MAD)</label>
+                <input type="number" name="prix_vente" value="{{ voiture.prix_vente }}" step="0.01" required>
+            </div>
+        </div>
+        <div style="margin-top:2rem;text-align:right;">
+            <button type="submit" class="btn"><i class='bx bx-save'></i> Enregistrer les modifications</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

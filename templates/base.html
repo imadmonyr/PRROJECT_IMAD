@@ -17,16 +17,28 @@
             {% if g.user and g.user.role == 'admin' %}
             <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class='bx bx-grid-alt'></i> Tableau de bord</a></li>
             {% endif %}
-            <li><a href="{{ url_for('voitures') }}" class="{% if request.endpoint == 'voitures' or request.endpoint == 'voitures_add' %}active{% endif %}"><i class='bx bx-car'></i> Voitures</a></li>
+
+            <li><a href="{{ url_for('marques') }}" class="{% if request.endpoint in ['marques','marque_detail'] %}active{% endif %}"><i class='bx bx-purchase-tag-alt'></i> Marques</a></li>
+            <li><a href="{{ url_for('voitures') }}" class="{% if request.endpoint in ['voitures','voitures_add','voiture_detail','voiture_edit'] %}active{% endif %}"><i class='bx bx-car'></i> Voitures</a></li>
+
             {% if g.user and g.user.role == 'admin' %}
-            <li><a href="{{ url_for('marques') }}" class="{% if request.endpoint == 'marques' %}active{% endif %}"><i class='bx bx-purchase-tag-alt'></i> Marques</a></li>
-            <li><a href="{{ url_for('clients') }}" class="{% if request.endpoint == 'clients' %}active{% endif %}"><i class='bx bx-user'></i> Clients</a></li>
-            <li><a href="{{ url_for('agents') }}" class="{% if request.endpoint == 'agents' %}active{% endif %}"><i class='bx bx-user-circle'></i> Agents</a></li>
-            <li><a href="{{ url_for('fournisseurs') }}" class="{% if request.endpoint == 'fournisseurs' %}active{% endif %}"><i class='bx bx-store-alt'></i> Fournisseurs</a></li>
-            <li><a href="{{ url_for('devis_select') }}" class="{% if request.endpoint == 'devis_select' %}active{% endif %}"><i class='bx bx-file'></i> Devis</a></li>
+            <li><a href="{{ url_for('clients') }}" class="{% if request.endpoint in ['clients','client_edit'] %}active{% endif %}"><i class='bx bx-user'></i> Clients</a></li>
+            <li><a href="{{ url_for('agents') }}" class="{% if request.endpoint in ['agents','agent_edit'] %}active{% endif %}"><i class='bx bx-user-circle'></i> Agents</a></li>
+            <li><a href="{{ url_for('fournisseurs') }}" class="{% if request.endpoint in ['fournisseurs','fournisseur_edit'] %}active{% endif %}"><i class='bx bx-store-alt'></i> Fournisseurs</a></li>
+            <li><a href="{{ url_for('devis_select') }}" class="{% if request.endpoint in ['devis_select','devis'] %}active{% endif %}"><i class='bx bx-file'></i> Devis</a></li>
             <li><a href="{{ url_for('transactions') }}" class="{% if request.endpoint == 'transactions' %}active{% endif %}"><i class='bx bx-cart'></i> Ventes & Achats</a></li>
             {% endif %}
-            <li style="margin-top: 30px;"><a href="{{ url_for('logout') }}" style="color: #ff6b6b;"><i class='bx bx-log-out'></i> Déconnexion ({{ g.user.username if g.user else '' }})</a></li>
+
+            {% if g.user and g.user.role == 'user' %}
+            <li><a href="{{ url_for('mes_devis') }}" class="{% if request.endpoint == 'mes_devis' %}active{% endif %}"><i class='bx bx-file-blank'></i> Mes Devis</a></li>
+            <li><a href="{{ url_for('mon_compte') }}" class="{% if request.endpoint == 'mon_compte' %}active{% endif %}"><i class='bx bx-cog'></i> Mon Compte</a></li>
+            {% endif %}
+
+            <li style="margin-top:30px;">
+                <a href="{{ url_for('logout') }}" style="color:#ff6b6b;">
+                    <i class='bx bx-log-out'></i> Déconnexion ({{ g.user.username if g.user else '' }})
+                </a>
+            </li>
         </ul>
     </aside>
 

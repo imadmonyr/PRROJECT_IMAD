@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Modifier Fournisseur - LuxeDrive{% endblock %}
+{% block page_title %}Modifier Fournisseur{% endblock %}
+
+{% block content %}
+<div class="header-actions" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('fournisseurs') }}" class="btn" style="background:var(--sidebar-bg);border:1px solid var(--border-color);">
+        <i class='bx bx-arrow-back'></i> Retour
+    </a>
+</div>
+<div class="form-container" style="max-width:500px;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;">Modifier : {{ fournisseur.nom }}</h2>
+    <form method="POST" action="{{ url_for('fournisseur_edit', id_fournisseur=fournisseur.id_fournisseur) }}">
+        <div class="form-group"><label>Nom</label><input type="text" name="nom" value="{{ fournisseur.nom }}" required></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse" value="{{ fournisseur.adresse }}"></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="{{ fournisseur.telephone }}"></div>
+        <div style="margin-top:1.5rem;text-align:right;">
+            <button type="submit" class="btn"><i class='bx bx-save'></i> Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

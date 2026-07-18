@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
-
 {% block title %}Fournisseurs - LuxeDrive{% endblock %}
 {% block page_title %}Gestion des Fournisseurs{% endblock %}
 
 {% block content %}
-<div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+<div style="display:grid;grid-template-columns:1fr 350px;gap:2rem;">
     <div class="table-container">
-        <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="font-size: 1.1rem; font-weight: 600;">Liste des Fournisseurs</h2>
-            <button onclick="window.print()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #475569;"><i class='bx bx-printer'></i> Imprimer</button>
+        <div style="padding:1.5rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+            <h2 style="font-size:1.1rem;font-weight:600;">Liste des Fournisseurs</h2>
+            <button onclick="window.print()" class="btn" style="padding:0.5rem 1rem;font-size:0.85rem;background:#475569;"><i class='bx bx-printer'></i> Imprimer</button>
         </div>
         <table>
             <thead>
@@ -16,41 +15,48 @@
                     <th>Nom</th>
                     <th>Adresse</th>
                     <th>Téléphone</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for fournisseur in fournisseurs %}
+                {% for f in fournisseurs %}
                 <tr>
-                    <td style="font-weight: 500;">{{ fournisseur.nom }}</td>
-                    <td style="color: var(--text-muted);">{{ fournisseur.adresse }}</td>
-                    <td>{{ fournisseur.telephone }}</td>
+                    <td style="font-weight:500;">{{ f.nom }}</td>
+                    <td style="color:var(--text-muted);">{{ f.adresse }}</td>
+                    <td>{{ f.telephone }}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ url_for('fournisseur_edit', id_fournisseur=f.id_fournisseur) }}" class="btn-action btn-edit" title="Modifier"><i class='bx bx-edit'></i></a>
+                            <form action="{{ url_for('fournisseur_delete', id_fournisseur=f.id_fournisseur) }}" method="POST" style="margin:0;"
+                                  onsubmit="return confirm('Supprimer ce fournisseur ?');">
+                                <button type="submit" class="btn-action btn-delete" title="Supprimer"><i class='bx bx-trash'></i></button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="3" style="text-align: center; padding: 3rem; color: var(--text-muted);">Aucun fournisseur trouvé.</td>
-                </tr>
+                <tr><td colspan="4" style="text-align:center;padding:3rem;color:var(--text-muted);">Aucun fournisseur trouvé.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <div class="form-container" style="height: fit-content; padding: 1.5rem;">
-        <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem;">Nouveau Fournisseur</h2>
+    <div class="form-container" style="height:fit-content;padding:1.5rem;">
+        <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;">Nouveau Fournisseur</h2>
         <form method="POST" action="{{ url_for('fournisseurs') }}">
-            <div class="form-group">
-                <label for="nom">Nom du Fournisseur</label>
-                <input type="text" id="nom" name="nom" required>
-            </div>
-            <div class="form-group">
-                <label for="adresse">Adresse</label>
-                <input type="text" id="adresse" name="adresse" required>
-            </div>
-            <div class="form-group">
-                <label for="telephone">Téléphone</label>
-                <input type="text" id="telephone" name="telephone" required>
-            </div>
-            <button type="submit" class="btn" style="width: 100%;"><i class='bx bx-plus'></i> Ajouter Fournisseur</button>
+            <div class="form-group"><label>Nom</label><input type="text" name="nom" required></div>
+            <div class="form-group"><label>Adresse</label><input type="text" name="adresse" required></div>
+            <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" required></div>
+            <button type="submit" class="btn" style="width:100%;"><i class='bx bx-plus'></i> Ajouter Fournisseur</button>
         </form>
     </div>
 </div>
+
+<style>
+.btn-action { display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);text-decoration:none;cursor:pointer;transition:all 0.2s;font-size:1rem; }
+.btn-edit { background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3); }
+.btn-edit:hover { background:rgba(59,130,246,0.2); }
+.btn-delete { background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.3); }
+.btn-delete:hover { background:rgba(239,68,68,0.2); }
+</style>
 {% endblock %}

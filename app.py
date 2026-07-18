@@ -155,6 +155,17 @@ def init_db():
             id_client INTEGER,
             FOREIGN KEY (id_client) REFERENCES client(id_client)
         );
+
+        CREATE TABLE IF NOT EXISTS devis (
+            id_devis INTEGER PRIMARY KEY AUTOINCREMENT,
+            vin TEXT NOT NULL,
+            id_client INTEGER NOT NULL,
+            date_devis DATE NOT NULL,
+            prix_vente REAL NOT NULL,
+            devis_num TEXT NOT NULL,
+            FOREIGN KEY (vin) REFERENCES voiture(vin),
+            FOREIGN KEY (id_client) REFERENCES client(id_client)
+        );
     ''')
     db.commit()
     # Seed the default admin account if not present
@@ -273,16 +284,53 @@ def logout():
 def dashboard():
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT COUNT(*) as count FROM voiture")
+    cur.execute("SELECT COUNT(*) as count FROM voiture WHERE statut='en_stock'")
     total_voitures = cur.fetchone()['count']
-    
     cur.execute("SELECT COUNT(*) as count FROM client")
     total_clients = cur.fetchone()['count']
-    
     cur.execute("SELECT COUNT(*) as count FROM vente")
     total_ventes = cur.fetchone()['count']
-    
-    return render_template('index.html', total_voitures=total_voitures, total_clients=total_clients, total_ventes=total_ventes)
+    cur.execute("SELECT COALESCE(SUM(v.prix_vente),0) as total FROM vente vt JOIN ligne_vente lv ON vt.id_vente=lv.id_vente JOIN voiture v ON lv.vin=v.vin")
+    chiffre_affaires = cur.fetchone()['total']
+    cur.execute("SELECT COUNT(*) as count FROM voiture WHERE statut='vendue'")
+    total_vendues = cur.fetchone()['count']
+    cur.execute("SELECT COUNT(*) as count FROM voiture WHERE statut='reservee'")
+    total_reservees = cur.fetchone()['count']
+    # Monthly sales for chart (last 12 months)
+    cur.execute("""
+        SELECT strftime('%Y-%m', date_vente) as mois, COUNT(*) as nb,
+               COALESCE(SUM(v.prix_vente),0) as ca
+        FROM vente vt
+        JOIN ligne_vente lv ON vt.id_vente=lv.id_vente
+        JOIN voiture v ON lv.vin=v.vin
+        GROUP BY mois ORDER BY mois DESC LIMIT 12
+    """)
+    rows = cur.fetchall()
+    rows = list(reversed(rows))
+    chart_labels = [r['mois'] for r in rows]
+    chart_ventes = [r['nb'] for r in rows]
+    chart_ca = [round(r['ca'], 2) for r in rows]
+    # Recent activity
+    cur.execute("""
+        SELECT vt.date_vente, c.prenom || ' ' || c.nom as client_nom,
+               mq.nom_marque || ' ' || m.nom_modele as voiture_nom,
+               v.prix_vente
+        FROM vente vt
+        JOIN client c ON vt.id_client=c.id_client
+        JOIN ligne_vente lv ON vt.id_vente=lv.id_vente
+        JOIN voiture v ON lv.vin=v.vin
+        JOIN modele m ON v.id_modele=m.id_modele
+        JOIN marque mq ON m.id_marque=mq.id_marque
+        ORDER BY vt.date_vente DESC LIMIT 8
+    """)
+    activites = cur.fetchall()
+    import json
+    return render_template('index.html',
+        total_voitures=total_voitures, total_clients=total_clients,
+        total_ventes=total_ventes, chiffre_affaires=chiffre_affaires,
+        total_vendues=total_vendues, total_reservees=total_reservees,
+        chart_labels=json.dumps(chart_labels), chart_ventes=json.dumps(chart_ventes),
+        chart_ca=json.dumps(chart_ca), activites=activites)
 
 @app.route('/voitures')
 @login_required
@@ -367,6 +415,61 @@ def voitures_add():
     modeles = cur.fetchall()
     return render_template('voitures_add.html', modeles=modeles)
 
+@app.route('/voitures/<vin>')
+@login_required
+def voiture_detail(vin):
+    db = get_db()
+    cur = db.cursor()
+    try:
+        cur.execute('''SELECT v.*, m.nom_modele, mq.nom_marque, mq.id_marque, m.image_url
+                       FROM voiture v JOIN modele m ON v.id_modele=m.id_modele
+                       JOIN marque mq ON m.id_marque=mq.id_marque WHERE v.vin=?''', (vin,))
+    except Exception:
+        cur.execute('''SELECT v.*, m.nom_modele, mq.nom_marque, mq.id_marque, NULL as image_url
+                       FROM voiture v JOIN modele m ON v.id_modele=m.id_modele
+                       JOIN marque mq ON m.id_marque=mq.id_marque WHERE v.vin=?''', (vin,))
+    voiture = cur.fetchone()
+    if not voiture:
+        return redirect(url_for('voitures'))
+    return render_template('voiture_detail.html', voiture=voiture)
+
+@app.route('/voitures/edit/<vin>', methods=['GET', 'POST'])
+@admin_required
+def voiture_edit(vin):
+    db = get_db()
+    cur = db.cursor()
+    if request.method == 'POST':
+        id_modele = request.form['id_modele']
+        type_v = request.form['type']
+        immatriculation = request.form['immatriculation']
+        annee = request.form['annee']
+        prix_achat = request.form['prix_achat']
+        prix_vente = request.form['prix_vente']
+        statut = request.form['statut']
+        cur.execute('''UPDATE voiture SET id_modele=?,type=?,immatriculation=?,annee=?,
+                       prix_achat=?,prix_vente=?,statut=? WHERE vin=?''',
+                    (id_modele, type_v, immatriculation, annee, prix_achat, prix_vente, statut, vin))
+        db.commit()
+        return redirect(url_for('voiture_detail', vin=vin))
+    cur.execute('''SELECT v.*, m.nom_modele, mq.nom_marque FROM voiture v
+                   JOIN modele m ON v.id_modele=m.id_modele
+                   JOIN marque mq ON m.id_marque=mq.id_marque WHERE v.vin=?''', (vin,))
+    voiture = cur.fetchone()
+    cur.execute('''SELECT m.id_modele, m.nom_modele, mq.nom_marque FROM modele m
+                   JOIN marque mq ON m.id_marque=mq.id_marque ORDER BY mq.nom_marque, m.nom_modele''')
+    modeles = cur.fetchall()
+    return render_template('voiture_edit.html', voiture=voiture, modeles=modeles)
+
+@app.route('/voitures/delete/<vin>', methods=['POST'])
+@admin_required
+def voiture_delete(vin):
+    db = get_db()
+    db.execute('DELETE FROM ligne_vente WHERE vin=?', (vin,))
+    db.execute('DELETE FROM ligne_achat WHERE vin=?', (vin,))
+    db.execute('DELETE FROM voiture WHERE vin=?', (vin,))
+    db.commit()
+    return redirect(url_for('voitures'))
+
 @app.route('/clients', methods=('GET', 'POST'))
 @admin_required
 def clients():
@@ -385,6 +488,29 @@ def clients():
     clients_list = cur.fetchall()
     return render_template('clients.html', clients=clients_list)
 
+@app.route('/clients/edit/<int:id_client>', methods=['GET', 'POST'])
+@admin_required
+def client_edit(id_client):
+    db = get_db()
+    cur = db.cursor()
+    if request.method == 'POST':
+        cur.execute('UPDATE client SET nom=?,prenom=?,telephone=?,email=? WHERE id_client=?',
+                    (request.form['nom'], request.form['prenom'],
+                     request.form['telephone'], request.form['email'], id_client))
+        db.commit()
+        return redirect(url_for('clients'))
+    cur.execute('SELECT * FROM client WHERE id_client=?', (id_client,))
+    client = cur.fetchone()
+    return render_template('client_edit.html', client=client)
+
+@app.route('/clients/delete/<int:id_client>', methods=['POST'])
+@admin_required
+def client_delete(id_client):
+    db = get_db()
+    db.execute('DELETE FROM client WHERE id_client=?', (id_client,))
+    db.commit()
+    return redirect(url_for('clients'))
+
 @app.route('/fournisseurs', methods=('GET', 'POST'))
 @admin_required
 def fournisseurs():
@@ -401,6 +527,29 @@ def fournisseurs():
     cur.execute('SELECT * FROM fournisseur')
     fournisseurs_list = cur.fetchall()
     return render_template('fournisseurs.html', fournisseurs=fournisseurs_list)
+
+@app.route('/fournisseurs/edit/<int:id_fournisseur>', methods=['GET', 'POST'])
+@admin_required
+def fournisseur_edit(id_fournisseur):
+    db = get_db()
+    cur = db.cursor()
+    if request.method == 'POST':
+        cur.execute('UPDATE fournisseur SET nom=?,adresse=?,telephone=? WHERE id_fournisseur=?',
+                    (request.form['nom'], request.form['adresse'],
+                     request.form['telephone'], id_fournisseur))
+        db.commit()
+        return redirect(url_for('fournisseurs'))
+    cur.execute('SELECT * FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
+    fournisseur = cur.fetchone()
+    return render_template('fournisseur_edit.html', fournisseur=fournisseur)
+
+@app.route('/fournisseurs/delete/<int:id_fournisseur>', methods=['POST'])
+@admin_required
+def fournisseur_delete(id_fournisseur):
+    db = get_db()
+    db.execute('DELETE FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
+    db.commit()
+    return redirect(url_for('fournisseurs'))
 
 @app.route('/marques', methods=('GET', 'POST'))
 @login_required
@@ -492,6 +641,29 @@ def agents():
     ''')
     agents_list = cur.fetchall()
     return render_template('agents.html', agents=agents_list)
+
+@app.route('/agents/edit/<int:id_agent>', methods=['GET', 'POST'])
+@admin_required
+def agent_edit(id_agent):
+    db = get_db()
+    cur = db.cursor()
+    if request.method == 'POST':
+        cur.execute('UPDATE agent SET nom=?,prenom=?,telephone=?,email=?,taux_commission=? WHERE id_agent=?',
+                    (request.form['nom'], request.form['prenom'], request.form['telephone'],
+                     request.form['email'], request.form['taux_commission'], id_agent))
+        db.commit()
+        return redirect(url_for('agents'))
+    cur.execute('SELECT * FROM agent WHERE id_agent=?', (id_agent,))
+    agent = cur.fetchone()
+    return render_template('agent_edit.html', agent=agent)
+
+@app.route('/agents/delete/<int:id_agent>', methods=['POST'])
+@admin_required
+def agent_delete(id_agent):
+    db = get_db()
+    db.execute('DELETE FROM agent WHERE id_agent=?', (id_agent,))
+    db.commit()
+    return redirect(url_for('agents'))
 
 @app.route('/transactions')
 @admin_required
@@ -644,9 +816,56 @@ def client_devis(vin):
     today = date.today().strftime('%d/%m/%Y')
     devis_num = f"{date.today().strftime('%Y%m%d')}-{vin[-4:]}"
     back_url = url_for('marque_detail', id_marque=voiture['id_marque'])
-
+    # Save devis to DB
+    try:
+        db.execute('INSERT INTO devis (vin,id_client,date_devis,prix_vente,devis_num) VALUES (?,?,?,?,?)',
+                   (vin, id_client, date.today().strftime('%Y-%m-%d'), voiture['prix_vente'], devis_num))
+        db.commit()
+    except Exception:
+        pass
     return render_template('devis.html', voiture=voiture, client=client,
                            date_today=today, devis_num=devis_num, back_url=back_url)
+
+@app.route('/client/mes-devis')
+@login_required
+def mes_devis():
+    if g.user['role'] != 'user':
+        return redirect(url_for('dashboard'))
+    db = get_db()
+    cur = db.cursor()
+    id_client = g.user['id_client']
+    try:
+        cur.execute('''SELECT d.id_devis, d.devis_num, d.date_devis, d.prix_vente,
+                              v.type, v.immatriculation, v.annee, v.statut,
+                              m.nom_modele, mq.nom_marque, d.vin
+                       FROM devis d
+                       JOIN voiture v ON d.vin=v.vin
+                       JOIN modele m ON v.id_modele=m.id_modele
+                       JOIN marque mq ON m.id_marque=mq.id_marque
+                       WHERE d.id_client=? ORDER BY d.date_devis DESC''', (id_client,))
+        devis_list = cur.fetchall()
+    except Exception:
+        devis_list = []
+    return render_template('mes_devis.html', devis_list=devis_list)
+
+@app.route('/client/mon-compte', methods=['GET', 'POST'])
+@login_required
+def mon_compte():
+    if g.user['role'] != 'user':
+        return redirect(url_for('dashboard'))
+    db = get_db()
+    cur = db.cursor()
+    id_client = g.user['id_client']
+    success = None
+    if request.method == 'POST':
+        cur.execute('UPDATE client SET nom=?,prenom=?,telephone=?,email=? WHERE id_client=?',
+                    (request.form['nom'], request.form['prenom'],
+                     request.form['telephone'], request.form['email'], id_client))
+        db.commit()
+        success = "Profil mis à jour avec succès."
+    cur.execute('SELECT * FROM client WHERE id_client=?', (id_client,))
+    client = cur.fetchone()
+    return render_template('mon_compte.html', client=client, success=success)
 
 @app.route('/devis/<vin>/<int:id_client>')
 @admin_required

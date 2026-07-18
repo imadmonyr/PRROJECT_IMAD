@@ -1,63 +1,176 @@
 {% extends 'base.html' %}
-
 {% block title %}Voitures - LuxeDrive{% endblock %}
 {% block page_title %}Gestion des Voitures{% endblock %}
 
 {% block content %}
 <div class="header-actions">
-    <h2 style="font-weight: 600; font-size: 1.25rem;">Inventaire Automobile</h2>
-    <div>
-        <button onclick="window.print()" class="btn" style="background-color: #475569; margin-right: 10px;"><i class='bx bx-printer'></i> Imprimer</button>
+    <h2 style="font-weight:600;font-size:1.25rem;">Inventaire Automobile</h2>
+    <div style="display:flex;gap:8px;">
+        <button onclick="window.print()" class="btn" style="background:#475569;"><i class='bx bx-printer'></i> Imprimer</button>
         {% if g.user and g.user.role == 'admin' %}
-        <a href="{{ url_for('voitures_add') }}" class="btn"><i class='bx bx-plus'></i> Ajouter une voiture</a>
+        <a href="{{ url_for('voitures_add') }}" class="btn"><i class='bx bx-plus'></i> Ajouter</a>
         {% endif %}
     </div>
 </div>
 
+<!-- Search & Filter Bar -->
+<div class="table-container" style="padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
+        <i class='bx bx-search' style="font-size:1.3rem;color:var(--text-muted);"></i>
+        <input type="text" id="search-input" placeholder="Rechercher marque, modèle, plaque, VIN..."
+               style="background:none;border:none;color:var(--text-main);font-size:0.95rem;width:100%;outline:none;">
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="filter-chip active" data-filter="statut" data-val="all">Tous</button>
+        <button class="filter-chip" data-filter="statut" data-val="en_stock">En Stock</button>
+        <button class="filter-chip" data-filter="statut" data-val="reservee">Réservées</button>
+        <button class="filter-chip" data-filter="statut" data-val="vendue">Vendues</button>
+        <span style="color:var(--border-color);margin:0 4px;">|</span>
+        <button class="filter-chip active" data-filter="type" data-val="all">Tous types</button>
+        <button class="filter-chip" data-filter="type" data-val="neuf">Neuf</button>
+        <button class="filter-chip" data-filter="type" data-val="occasion">Occasion</button>
+    </div>
+</div>
+
 <div class="table-container">
-    <table>
+    <table id="voitures-table">
         <thead>
             <tr>
-                <th>VIN</th>
                 <th>Marque & Modèle</th>
                 <th>Type</th>
                 <th>Immatriculation</th>
                 <th>Année</th>
                 <th>Prix de vente</th>
                 <th>Statut</th>
-                {% if g.user and g.user.role == 'user' %}
-                <th>Action</th>
-                {% endif %}
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for voiture in voitures %}
-            <tr>
-                <td style="font-family: monospace; color: var(--text-muted);">{{ voiture.vin }}</td>
-                <td style="font-weight: 500;">{{ voiture.nom_marque }} {{ voiture.nom_modele }}</td>
-                <td><span class="badge {{ voiture.type }}">{{ voiture.type | capitalize }}</span></td>
+            <tr data-statut="{{ voiture.statut }}" data-type="{{ voiture.type }}"
+                data-search="{{ voiture.nom_marque|lower }} {{ voiture.nom_modele|lower }} {{ voiture.immatriculation|lower }} {{ voiture.vin|lower }}">
+                <td>
+                    <a href="{{ url_for('voiture_detail', vin=voiture.vin) }}"
+                       style="font-weight:600;color:var(--accent-gold);text-decoration:none;">
+                        {{ voiture.nom_marque }} {{ voiture.nom_modele }}
+                    </a>
+                    <div style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;">{{ voiture.vin }}</div>
+                </td>
+                <td><span class="badge {{ voiture.type }}">{{ voiture.type|capitalize }}</span></td>
                 <td>{{ voiture.immatriculation }}</td>
                 <td>{{ voiture.annee }}</td>
-                <td style="font-weight: 600;">{{ "{:,.2f}".format(voiture.prix_vente) }} MAD</td>
-                <td><span class="badge {{ voiture.statut }}">{{ voiture.statut | replace('_', ' ') | capitalize }}</span></td>
-                {% if g.user and g.user.role == 'user' %}
+                <td style="font-weight:600;">{{ "{:,.0f}".format(voiture.prix_vente) }} MAD</td>
                 <td>
                     {% if voiture.statut == 'en_stock' %}
-                    <form action="{{ url_for('voitures_buy', vin=voiture.vin) }}" method="POST" style="margin:0;">
-                        <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.85rem; background-color: #28a745;">Acheter</button>
-                    </form>
+                    <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);">En Stock</span>
+                    {% elif voiture.statut == 'reservee' %}
+                    <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">Réservée</span>
                     {% else %}
-                    <span style="color: #999; font-size: 0.85rem;">Indisponible</span>
+                    <span class="badge" style="background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);">Vendue</span>
                     {% endif %}
                 </td>
-                {% endif %}
+                <td>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <a href="{{ url_for('voiture_detail', vin=voiture.vin) }}" class="btn-action btn-view" title="Voir détail">
+                            <i class='bx bx-show'></i>
+                        </a>
+                        {% if g.user and g.user.role == 'admin' %}
+                        <a href="{{ url_for('voiture_edit', vin=voiture.vin) }}" class="btn-action btn-edit" title="Modifier">
+                            <i class='bx bx-edit'></i>
+                        </a>
+                        <form action="{{ url_for('voiture_delete', vin=voiture.vin) }}" method="POST" style="margin:0;"
+                              onsubmit="return confirm('Supprimer cette voiture ? Cette action est irréversible.');">
+                            <button type="submit" class="btn-action btn-delete" title="Supprimer">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </form>
+                        {% elif g.user and g.user.role == 'user' and voiture.statut == 'en_stock' %}
+                        <a href="{{ url_for('client_devis', vin=voiture.vin) }}" class="btn-action btn-edit" title="Obtenir un devis" style="background:rgba(212,175,55,0.15);color:var(--accent-gold);border-color:rgba(212,175,55,0.3);">
+                            <i class='bx bx-file'></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
             {% else %}
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">Aucune voiture trouvée.</td>
-            </tr>
+            <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted);">Aucune voiture trouvée.</td></tr>
             {% endfor %}
         </tbody>
     </table>
+    <div id="no-results" style="display:none;padding:3rem;text-align:center;color:var(--text-muted);">
+        <i class='bx bx-search-alt' style="font-size:3rem;opacity:0.3;"></i>
+        <p style="margin-top:1rem;">Aucun résultat pour cette recherche.</p>
+    </div>
 </div>
+
+<style>
+.filter-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.filter-chip.active, .filter-chip:hover {
+    background: rgba(212,175,55,0.15);
+    color: var(--accent-gold);
+    border-color: rgba(212,175,55,0.4);
+}
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+.btn-view:hover { background: rgba(100,116,139,0.2); color: var(--text-main); }
+.btn-edit { background: rgba(59,130,246,0.1); color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+.btn-edit:hover { background: rgba(59,130,246,0.2); }
+.btn-delete { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.3); }
+.btn-delete:hover { background: rgba(239,68,68,0.2); }
+</style>
+
+<script>
+const searchInput = document.getElementById('search-input');
+let activeStatut = 'all';
+let activeType = 'all';
+
+document.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const filter = this.dataset.filter;
+        document.querySelectorAll(`.filter-chip[data-filter="${filter}"]`).forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        if (filter === 'statut') activeStatut = this.dataset.val;
+        else activeType = this.dataset.val;
+        applyFilters();
+    });
+});
+
+searchInput.addEventListener('input', applyFilters);
+
+function applyFilters() {
+    const q = searchInput.value.toLowerCase();
+    let visible = 0;
+    document.querySelectorAll('#voitures-table tbody tr[data-statut]').forEach(row => {
+        const matchSearch = row.dataset.search.includes(q);
+        const matchStatut = activeStatut === 'all' || row.dataset.statut === activeStatut;
+        const matchType = activeType === 'all' || row.dataset.type === activeType;
+        const show = matchSearch && matchStatut && matchType;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
 {% endblock %}
