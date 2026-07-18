@@ -204,12 +204,14 @@
     background: #0d0d0d;
     border: 1px solid #1e1e1e;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;   /* horizontal scroll on very small screens */
   }
   table {
     width: 100%;
+    min-width: 700px;   /* prevents collapse below readable width */
     border-collapse: collapse;
     font-size: 0.85rem;
+    table-layout: fixed;
   }
   thead th {
     background: #111;
@@ -218,22 +220,31 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    padding: 12px 14px;
+    padding: 11px 12px;
     text-align: left;
     border-bottom: 1px solid #1e1e1e;
     white-space: nowrap;
+    overflow: hidden;
   }
+  /* Column widths — 6 columns totalling ~100% */
+  col.c-fourn   { width: 24%; }
+  col.c-contact { width: 20%; }
+  col.c-delai   { width: 12%; }
+  col.c-marques { width: 26%; }
+  col.c-cmdes   { width: 8%; }
+  col.c-actions { width: 10%; }
+
   tbody tr { border-bottom: 1px solid #141414; transition: background 0.15s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: #111; }
-  tbody td { padding: 12px 14px; color: #ccc; vertical-align: middle; }
+  tbody td { padding: 11px 12px; color: #ccc; vertical-align: middle; overflow: hidden; }
 
-  .td-id { color: #333; font-size: 0.78rem; width: 38px; }
-  .td-name { color: #fff; font-weight: 600; }
-  .td-sub { color: #555; font-size: 0.78rem; margin-top: 2px; }
-  .td-mono { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #aaa; }
-  .td-dim { color: #666; font-size: 0.8rem; }
-  .td-ice { color: #888; font-family: 'Courier New', monospace; font-size: 0.78rem; }
+  .td-name { color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-sub  { color: #555; font-size: 0.75rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-mono { font-family: 'Courier New', monospace; font-size: 0.79rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .td-dim  { color: #666; font-size: 0.79rem; }
+  .td-ice  { display: inline-block; color: #555; font-family: 'Courier New', monospace; font-size: 0.74rem;
+             background: #141414; border: 1px solid #222; border-radius: 4px; padding: 1px 6px; margin-top: 3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 
   .pill-tag {
     display: inline-flex;
@@ -409,37 +420,52 @@
 <!-- Table -->
 <div class="table-wrapper">
   <table>
+    <colgroup>
+      <col class="c-fourn">
+      <col class="c-contact">
+      <col class="c-delai">
+      <col class="c-marques">
+      <col class="c-cmdes">
+      <col class="c-actions">
+    </colgroup>
     <thead>
       <tr>
-        <th>#</th>
-        <th>Nom / Raison sociale</th>
-        <th>ICE</th>
-        <th>Pays</th>
+        <th>Fournisseur</th>
         <th>Contact</th>
-        <th>Email</th>
-        <th>Délai livraison</th>
+        <th>Délai</th>
         <th>Marques fournies</th>
-        <th>Commandes</th>
-        <th>Actions</th>
+        <th style="text-align:center;">Cmdes</th>
+        <th style="text-align:center;">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% if fournisseurs %}
         {% for f in fournisseurs %}
         <tr class="fourn-row">
-          <td class="td-id">{{ f.id_fournisseur }}</td>
+          <!-- Fournisseur: nom + ICE + pays + adresse -->
           <td>
             <div class="td-name">{{ f.nom or '—' }}</div>
-            {% if f.adresse %}<div class="td-sub">{{ f.adresse }}</div>{% endif %}
+            {% if f.ice %}<span class="td-ice">{{ f.ice }}</span>{% endif %}
+            {% if f.pays or f.adresse %}
+              <div class="td-sub">
+                {% if f.pays %}{{ f.pays }}{% endif %}{% if f.pays and f.adresse %} · {% endif %}{% if f.adresse %}{{ f.adresse }}{% endif %}
+              </div>
+            {% endif %}
           </td>
-          <td class="td-ice">{{ f.ice or '—' }}</td>
-          <td class="td-dim">{{ f.pays or '—' }}</td>
+          <!-- Contact: tel + contact_personnel + email -->
           <td>
             {% if f.telephone %}<div class="td-mono">{{ f.telephone }}</div>{% endif %}
-            {% if f.contact_personnel %}<div class="td-mono" style="color:#D4AF37; margin-top:3px;"><i class='bx bx-user' style="font-size:0.75rem;"></i> {{ f.contact_personnel }}</div>{% endif %}
-            {% if not f.telephone and not f.contact_personnel %}<span class="td-dim">—</span>{% endif %}
+            {% if f.contact_personnel %}
+              <div class="td-mono" style="color:#D4AF37; margin-top:2px;">
+                <i class='bx bx-user' style="font-size:0.72rem;"></i> {{ f.contact_personnel }}
+              </div>
+            {% endif %}
+            {% if f.email %}<div class="td-sub" style="margin-top:2px;">{{ f.email }}</div>{% endif %}
+            {% if not f.telephone and not f.contact_personnel and not f.email %}
+              <span class="td-dim">—</span>
+            {% endif %}
           </td>
-          <td class="td-dim">{{ f.email or '—' }}</td>
+          <!-- Délai -->
           <td>
             {% if f.delai_livraison %}
               <span class="delay-badge"><i class='bx bx-time-five'></i> {{ f.delai_livraison }}</span>
@@ -447,6 +473,7 @@
               <span class="td-dim">—</span>
             {% endif %}
           </td>
+          <!-- Marques -->
           <td>
             {% if f.marques_fournies %}
               {% for mq_name in f.marques_fournies.split(',') %}
@@ -456,15 +483,17 @@
               <span class="td-dim">—</span>
             {% endif %}
           </td>
-          <td>
+          <!-- Commandes -->
+          <td style="text-align:center;">
             {% if f.nb_commandes and f.nb_commandes > 0 %}
               <span class="pill-tag orders"><i class='bx bx-package'></i> {{ f.nb_commandes }}</span>
             {% else %}
               <span class="td-dim">—</span>
             {% endif %}
           </td>
+          <!-- Actions -->
           <td>
-            <div class="actions">
+            <div class="actions" style="justify-content:center;">
               <a href="/fournisseurs/edit/{{ f.id_fournisseur }}" class="btn-icon edit" title="Modifier">
                 <i class='bx bx-edit'></i>
               </a>
@@ -480,7 +509,7 @@
         {% endfor %}
       {% else %}
         <tr>
-          <td colspan="10">
+          <td colspan="6">
             <div class="empty-state">
               <i class='bx bx-building'></i>
               Aucun fournisseur enregistré
@@ -489,7 +518,7 @@
         </tr>
       {% endif %}
       <tr id="noResults" style="display:none;">
-        <td colspan="10">
+        <td colspan="6">
           <div class="empty-state">
             <i class='bx bx-search-alt'></i>
             Aucun résultat pour cette recherche
