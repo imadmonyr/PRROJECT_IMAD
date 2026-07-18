@@ -434,7 +434,7 @@ def marque_detail(id_marque):
         return redirect(url_for('marques'))
     cur.execute('''
         SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
-               v.statut, m.nom_modele, mq.nom_marque
+               v.statut, m.nom_modele, mq.nom_marque, m.image_url
         FROM voiture v
         JOIN modele m ON v.id_modele = m.id_modele
         JOIN marque mq ON m.id_marque = mq.id_marque
