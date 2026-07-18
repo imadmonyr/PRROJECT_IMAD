@@ -224,7 +224,7 @@ def login():
             if user['role'] == 'admin':
                 return redirect(url_for('dashboard'))
             else:
-                return redirect(url_for('voitures'))
+                return redirect(url_for('marques'))
         else:
             return render_template('login.html', error="Identifiants incorrects")
             
@@ -259,7 +259,7 @@ def signup():
         session['user_id'] = user['id_user']
         session['role'] = user['role']
         
-        return redirect(url_for('voitures'))
+        return redirect(url_for('marques'))
         
     return render_template('signup.html')
 
@@ -403,7 +403,7 @@ def fournisseurs():
     return render_template('fournisseurs.html', fournisseurs=fournisseurs_list)
 
 @app.route('/marques', methods=('GET', 'POST'))
-@admin_required
+@login_required
 def marques():
     db = get_db()
     cur = db.cursor()
@@ -432,15 +432,27 @@ def marque_detail(id_marque):
     marque = cur.fetchone()
     if not marque:
         return redirect(url_for('marques'))
-    cur.execute('''
-        SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
-               v.statut, m.nom_modele, mq.nom_marque, m.image_url
-        FROM voiture v
-        JOIN modele m ON v.id_modele = m.id_modele
-        JOIN marque mq ON m.id_marque = mq.id_marque
-        WHERE mq.id_marque = ?
-        ORDER BY v.annee DESC, v.prix_vente DESC
-    ''', (id_marque,))
+    is_client = g.user and g.user['role'] == 'user'
+    if is_client:
+        cur.execute('''
+            SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
+                   v.statut, m.nom_modele, mq.nom_marque, m.image_url
+            FROM voiture v
+            JOIN modele m ON v.id_modele = m.id_modele
+            JOIN marque mq ON m.id_marque = mq.id_marque
+            WHERE mq.id_marque = ? AND v.statut = 'en_stock'
+            ORDER BY v.annee DESC, v.prix_vente DESC
+        ''', (id_marque,))
+    else:
+        cur.execute('''
+            SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente,
+                   v.statut, m.nom_modele, mq.nom_marque, m.image_url
+            FROM voiture v
+            JOIN modele m ON v.id_modele = m.id_modele
+            JOIN marque mq ON m.id_marque = mq.id_marque
+            WHERE mq.id_marque = ?
+            ORDER BY v.annee DESC, v.prix_vente DESC
+        ''', (id_marque,))
     voitures = cur.fetchall()
     total = len(voitures)
     en_stock = sum(1 for v in voitures if v['statut'] == 'en_stock')
@@ -452,7 +464,8 @@ def marque_detail(id_marque):
                            total=total,
                            en_stock=en_stock,
                            vendues=vendues,
-                           reservees=reservees)
+                           reservees=reservees,
+                           is_client=is_client)
 
 @app.route('/agents', methods=('GET', 'POST'))
 @admin_required
@@ -598,6 +611,40 @@ def achats_add():
     voitures = cur.fetchall()
 
     return render_template('achat_add.html', fournisseurs=fournisseurs, marques=marques, voitures=voitures)
+
+@app.route('/client/devis/<vin>')
+@login_required
+def client_devis(vin):
+    if g.user['role'] != 'user':
+        return redirect(url_for('marques'))
+
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute('''
+        SELECT v.vin, v.type, v.immatriculation, v.annee, v.prix_achat, v.prix_vente, v.statut,
+               m.nom_modele, mq.nom_marque, mq.id_marque
+        FROM voiture v
+        JOIN modele m ON v.id_modele = m.id_modele
+        JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE v.vin = ? AND v.statut = 'en_stock'
+    ''', (vin,))
+    voiture = cur.fetchone()
+
+    if not voiture:
+        return redirect(url_for('marques'))
+
+    id_client = g.user['id_client']
+    cur.execute('SELECT * FROM client WHERE id_client = ?', (id_client,))
+    client = cur.fetchone()
+
+    from datetime import date
+    today = date.today().strftime('%d/%m/%Y')
+    devis_num = f"{date.today().strftime('%Y%m%d')}-{vin[-4:]}"
+    back_url = url_for('marque_detail', id_marque=voiture['id_marque'])
+
+    return render_template('devis.html', voiture=voiture, client=client,
+                           date_today=today, devis_num=devis_num, back_url=back_url)
 
 @app.route('/devis/<vin>/<int:id_client>')
 @admin_required

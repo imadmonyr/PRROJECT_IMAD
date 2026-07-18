@@ -121,9 +121,9 @@
                 </div>
             </div>
 
-            {% if v.statut == 'en_stock' and g.user and g.user['role'] == 'user' %}
-            <a href="{{ url_for('buy_voiture', vin=v.vin) }}" class="btn-buy">
-                <i class='bx bx-cart'></i> Acheter
+            {% if g.user and g.user['role'] == 'user' %}
+            <a href="{{ url_for('client_devis', vin=v.vin) }}" class="btn-buy">
+                <i class='bx bx-file'></i> Obtenir un Devis
             </a>
             {% endif %}
         </div>

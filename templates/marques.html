@@ -6,9 +6,11 @@
 {% block content %}
 <div class="header-actions">
     <h2 style="font-weight: 600; font-size: 1.25rem;">Nos Marques Partenaires</h2>
+    {% if g.user and g.user['role'] == 'admin' %}
     <div>
         <a href="#add-marque-modal" class="btn"><i class='bx bx-plus'></i> Ajouter une Marque</a>
     </div>
+    {% endif %}
 </div>
 
 <!-- Search Bar -->
@@ -41,7 +43,8 @@
     {% endfor %}
 </div>
 
-<!-- Simple inline Modal using CSS :target -->
+<!-- Simple inline Modal using CSS :target (admin only) -->
+{% if g.user and g.user['role'] == 'admin' %}
 <div id="add-marque-modal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -65,6 +68,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <style>
 /* Grid Layout resembling Wandaloo.com */
