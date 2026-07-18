@@ -1,0 +1,172 @@
+====================================================
+  LUXEDRIVE — PROJECT BRIEFING
+  Last updated: July 18, 2026
+====================================================
+
+PROJECT OVERVIEW
+----------------
+Name: LuxeDrive
+Type: Car dealership management system (gestion de voitures)
+Language: Python (Flask) + SQLite + Jinja2 HTML templates
+Market: Moroccan (prices in MAD, Moroccan plate format)
+UI Language: French
+Theme: Dark UI — black background (#050505), red primary (#990000), gold accent (#D4AF37)
+
+The app runs LOCALLY on the user's PC. It is NOT deployed online.
+To run: activate venv, then `python app.py`. Browser opens automatically at http://127.0.0.1:5000
+
+GitHub repo: https://github.com/imadmonyr/PRROJECT_IMAD
+Note: GitHub only contains a PARTIAL copy of the project (the key files).
+The FULL project lives locally at:
+  C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\
+
+
+HOW TO RUN
+----------
+1. Open Command Prompt (cmd) — NOT PowerShell (PowerShell blocks venv activation)
+2. Navigate to project folder:
+   cd "C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture"
+3. Activate virtual environment:
+   venv\Scripts\activate
+4. Run the app:
+   python app.py
+5. Browser opens automatically at http://127.0.0.1:5000
+
+
+DATABASE
+--------
+File: database.db (located in the root project folder, 84 Ko)
+Full path: C:\Users\PC\Desktop\imad docc projet fin d'anner\gestion-voiture\database.db
+Engine: SQLite
+Viewer tool: DB Browser for SQLite (sqlitebrowser.org) — open database.db to browse/edit data
+  OR: SQLite Viewer extension in VS Code
+
+The app writes directly to this file. Any car/client/sale added through the website
+is saved here instantly.
+
+
+DATABASE SCHEMA (tables)
+------------------------
+- marque          → car brands
+- modele          → car models (linked to marque)
+- voiture         → cars (VIN, model, type, plate, year, buy price, sell price, status)
+- client          → customers
+- fournisseur     → suppliers
+- agent           → sales agents (with commission rate %)
+- commande_achat  → purchase orders (from suppliers)
+- ligne_achat     → cars per purchase order (links commande_achat → voiture by VIN)
+- vente           → sales transactions
+- ligne_vente     → cars per sale (links vente → voiture by VIN)
+- facture         → invoices
+- paiement        → payments
+- historique_proprietaire → ownership history
+- user            → app users (roles: admin / user)
+
+User roles:
+  admin → full access to everything
+  user  → can only browse cars and buy them
+
+
+APP PAGES (routes in app.py)
+-----------------------------
+/                   → Dashboard (stats: cars, sales, clients)
+/voitures           → Car inventory list
+/voitures/add       → Add a new car
+/voitures/buy/<vin> → Buy a car (user role only)
+/clients            → Client management (CRUD)
+/agents             → Agent management (CRUD)
+/fournisseurs       → Supplier management (CRUD)
+/marques            → Brand management + model management
+/marque/<id>        → Brand detail page (models for that brand)
+/transactions       → Sales & purchases history
+/ventes/add         → Record a new sale
+/achats/add         → Record a new purchase (ADDED July 2026)
+/devis/select       → Select car for quote
+/devis/<vin>/<id>   → Generate invoice/quote (PDF-ready)
+/confirmation/<id>  → Bon de confirmation for a sale
+/login              → Login page
+/signup             → Signup page
+
+
+ESSENTIAL FILES (keep these)
+-----------------------------
+app.py              → Main Flask application — all routes and logic
+database.db         → The SQLite database — all data lives here
+requirements.txt    → Python package dependencies
+schema.sql          → SQL to recreate all tables from scratch (backup)
+seed_data.py        → Seeds test data into the database (8 brands, 19 cars, 10 clients, etc.)
+templates/          → All HTML pages (Jinja2 templates)
+static/             → CSS (style.css) + brand SVG logos folder
+venv/               → Python virtual environment with all installed packages
+
+
+FILES/FOLDERS TO REMOVE (useless clutter — not urgent, do when you have time)
+------------------------------------------------------------------------------
+__pycache__/                    → Auto-generated Python cache, always safe to delete
+build/                          → PyInstaller build artifacts, not needed
+dist/                           → PyInstaller distribution folder, not needed
+app.spec                        → PyInstaller config file, not needed
+error_log.txt                   → Old error log, not needed
+out.txt                         → Old output log, not needed
+LuxeDrive_Application.exe       → Old compiled version v1
+LuxeDrive_Application_v2.exe    → Old compiled version v2
+LuxeDrive_Application_v3.exe    → Old compiled version v3
+LuxeDrive_Application_v4.exe    → Old compiled version v4
+LuxeDrive_Application_v5.exe    → Old compiled version v5
+LuxeDrive_Application_v6.exe    → Old compiled version v6
+LuxeDrive_Application_v7.exe    → Old compiled version v7
+LuxeDrive_Application_v8.exe    → Old compiled version v8
+LuxeDrive_Application_v9.exe    → Old compiled version v9
+  → All .exe files are old compiled desktop builds. Since you're running
+    with Python directly, none of these are needed.
+
+
+GITHUB SITUATION
+----------------
+The GitHub repo (https://github.com/imadmonyr/PRROJECT_IMAD) is NOT a full copy.
+It only contains the files that affect the core logic and structure:
+  app.py, database.db, requirements.txt, schema.sql, seed_data.py,
+  templates/, static/
+
+Changes made by this agent are pushed to GitHub using a PAT token.
+To apply GitHub changes to the local folder: manually copy the changed files
+(git pull does NOT work cleanly since the local folder has many more files
+than what's tracked in git).
+
+
+CHANGES MADE (July 18, 2026)
+-----------------------------
+Problem: "Nouvel Achat" button in Ventes & Achats page was broken (href="#")
+Fix applied:
+  1. Created templates/achat_add.html
+     → New form: date d'achat, fournisseur, marque (brand filter), voiture (VIN)
+     → Selecting a brand dynamically filters the voiture dropdown via JavaScript
+     → On submit: inserts into commande_achat + ligne_achat tables
+  2. Updated templates/transactions.html
+     → Fixed button: href="#" → href="{{ url_for('achats_add') }}"
+  3. Updated app.py
+     → Added /achats/add route (GET + POST) with @admin_required decorator
+
+To apply these to your local folder:
+  - Copy achat_add.html into your templates/ folder
+  - In your local transactions.html, change href="#" to href="{{ url_for('achats_add') }}"
+  - In your local app.py, paste the achats_add() route after the ventes_add() function
+
+
+TECH STACK
+----------
+Backend:  Python 3.x, Flask, SQLite (via sqlite3 module)
+Frontend: Jinja2 templates, custom CSS (Inter font, Boxicons icons)
+Auth:     Session-based (Flask sessions), role-based (admin/user)
+Build:    Was previously compiled to .exe with PyInstaller (no longer needed)
+Packages: Flask, and others listed in requirements.txt
+
+
+AGENT NOTES
+-----------
+- Always use Command Prompt (cmd), NOT PowerShell — venv activation is blocked in PowerShell on this machine
+- Database path in app.py is dynamic: resolves to same folder as app.py
+- GitHub token needs to be provided by user for pushes (PAT tokens expire)
+- The app auto-opens the browser on startup (webbrowser module in app.py)
+- Moroccan license plate format is validated in the voitures_add form
+====================================================
