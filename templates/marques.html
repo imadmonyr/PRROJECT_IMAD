@@ -4,8 +4,13 @@
 {% block page_title %}Marques de Prestige{% endblock %}
 
 {% block content %}
+<!-- Embed car data for client-side filtering -->
+<script>
+const ALL_CARS = {{ all_cars | tojson }};
+</script>
+
 <div class="header-actions">
-    <h2 style="font-weight: 600; font-size: 1.25rem;">Nos Marques Partenaires</h2>
+    <h2 style="font-weight:600;font-size:1.25rem;">Nos Marques Partenaires</h2>
     {% if g.user and g.user['role'] == 'admin' %}
     <div>
         <a href="#add-marque-modal" class="btn"><i class='bx bx-plus'></i> Ajouter une Marque</a>
@@ -13,37 +18,85 @@
     {% endif %}
 </div>
 
-<!-- Search Bar -->
-<div class="table-container" style="margin-bottom: 2rem; padding: 1rem; display: flex; align-items: center; gap: 10px; background-color: var(--card-bg);">
-    <i class='bx bx-search' style="font-size: 1.5rem; color: var(--text-muted);"></i>
-    <input type="text" id="search-brand" placeholder="Rechercher une marque..." style="background: none; border: none; color: var(--text-main); font-size: 1rem; width: 100%; outline: none;">
+<!-- Filter Bar -->
+<div class="table-container" style="padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
+    <!-- Brand search -->
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;">
+        <i class='bx bx-search' style="font-size:1.3rem;color:var(--text-muted);"></i>
+        <input type="text" id="search-brand"
+               placeholder="Rechercher une marque..."
+               style="background:none;border:none;color:var(--text-main);font-size:0.95rem;width:100%;outline:none;">
+    </div>
+    <!-- Type chips -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="filter-chip active" data-filter="type" data-val="all">Tous types</button>
+        <button class="filter-chip" data-filter="type" data-val="neuf">Neuf</button>
+        <button class="filter-chip" data-filter="type" data-val="occasion">Occasion</button>
+    </div>
+    <!-- Price & Year -->
+    <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center;width:100%;padding-top:0.75rem;border-top:1px solid var(--border-color);">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-money' style="color:var(--text-muted);font-size:1.1rem;"></i>
+            <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">Prix (MAD) :</span>
+            <input type="number" id="prix-min" placeholder="Min" min="0" step="10000"
+                   style="width:110px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+            <span style="color:var(--text-muted);">—</span>
+            <input type="number" id="prix-max" placeholder="Max" min="0" step="10000"
+                   style="width:110px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class='bx bx-calendar' style="color:var(--text-muted);font-size:1.1rem;"></i>
+            <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">Année :</span>
+            <input type="number" id="annee-min" placeholder="De" min="1990" max="2030"
+                   style="width:80px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+            <span style="color:var(--text-muted);">—</span>
+            <input type="number" id="annee-max" placeholder="À" min="1990" max="2030"
+                   style="width:80px;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;color:var(--text-main);font-size:0.82rem;outline:none;">
+        </div>
+        <button onclick="resetFilters()"
+                style="margin-left:auto;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:6px;padding:5px 14px;color:var(--text-muted);font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:5px;">
+            <i class='bx bx-reset'></i> Réinitialiser
+        </button>
+    </div>
+</div>
+
+<!-- No-results message -->
+<div id="no-results" style="display:none;text-align:center;padding:3rem;color:var(--text-muted);">
+    <i class='bx bx-search-alt' style="font-size:3rem;opacity:0.3;display:block;margin-bottom:1rem;"></i>
+    Aucune marque ne correspond aux filtres sélectionnés.
 </div>
 
 <!-- Brand Grid -->
-<div class="brand-grid-container">
+<div class="brand-grid-container" id="brand-grid">
     {% for marque in marques %}
-    <a href="{{ url_for('marque_detail', id_marque=marque.id_marque) }}" class="brand-card-link" data-name="{{ marque.nom_marque | lower }}">
-    <div class="brand-card">
-        <div class="brand-logo-wrapper">
-            {% set logo_filename = marque.nom_marque | lower | replace(' ', '_') ~ '.svg' %}
-            <img src="{{ url_for('static', filename='logos/' ~ logo_filename) }}" 
-                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='logos/default.svg') }}';" 
-                 alt="{{ marque.nom_marque }}">
+    <a href="{{ url_for('marque_detail', id_marque=marque.id_marque) }}"
+       class="brand-card-link"
+       id="brand-card-{{ marque.id_marque }}"
+       data-marque-id="{{ marque.id_marque }}"
+       data-name="{{ marque.nom_marque | lower }}">
+        <div class="brand-card">
+            <div class="brand-logo-wrapper">
+                {% set logo_filename = marque.nom_marque | lower | replace(' ', '_') ~ '.svg' %}
+                <img src="{{ url_for('static', filename='logos/' ~ logo_filename) }}"
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='logos/default.svg') }}';"
+                     alt="{{ marque.nom_marque }}">
+            </div>
+            <div class="brand-details">
+                <span class="brand-name">{{ marque.nom_marque }}</span>
+                <span class="brand-count" id="count-{{ marque.id_marque }}">
+                    {{ marque.voiture_count }} {% if marque.voiture_count != 1 %}voitures{% else %}voiture{% endif %}
+                </span>
+            </div>
         </div>
-        <div class="brand-details">
-            <span class="brand-name">{{ marque.nom_marque }}</span>
-            <span class="brand-count">{{ marque.voiture_count }} {% if marque.voiture_count > 1 %}voitures{% else %}voiture{% endif %}</span>
-        </div>
-    </div>
     </a>
     {% else %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+    <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);">
         Aucune marque enregistrée.
     </div>
     {% endfor %}
 </div>
 
-<!-- Simple inline Modal using CSS :target (admin only) -->
+<!-- Admin: Add brand modal -->
 {% if g.user and g.user['role'] == 'admin' %}
 <div id="add-marque-modal" class="modal-overlay">
     <div class="modal-content">
@@ -52,17 +105,17 @@
             <a href="#" class="close-btn">&times;</a>
         </div>
         <form method="POST" action="{{ url_for('marques') }}">
-            <div class="form-group" style="margin-top: 1rem;">
+            <div class="form-group" style="margin-top:1rem;">
                 <label for="nom_marque">Nom de la Marque</label>
                 <input type="text" id="nom_marque" name="nom_marque" required placeholder="Ex: Mercedes, Audi, Porsche...">
             </div>
             <div class="form-group">
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    <i class='bx bx-info-circle'></i> Si un logo correspondant (format SVG/PNG) existe dans le dossier des logos, il sera automatiquement associé.
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;">
+                    <i class='bx bx-info-circle'></i> Si un logo SVG correspondant existe dans le dossier logos, il sera associé automatiquement.
                 </p>
             </div>
-            <div style="text-align: right; margin-top: 2rem;">
-                <a href="#" class="btn btn-secondary" style="background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); margin-right: 10px;">Annuler</a>
+            <div style="text-align:right;margin-top:2rem;">
+                <a href="#" class="btn btn-secondary" style="background:transparent;border:1px solid var(--border-color);color:var(--text-main);margin-right:10px;">Annuler</a>
                 <button type="submit" class="btn">Enregistrer</button>
             </div>
         </form>
@@ -71,13 +124,12 @@
 {% endif %}
 
 <style>
-/* Grid Layout resembling Wandaloo.com */
 .brand-grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1.5rem;
 }
-
+.brand-card-link { text-decoration: none; }
 .brand-card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -88,139 +140,173 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s ease;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    height: 200px;
+    height: 100%;
 }
-
 .brand-card:hover {
-    transform: translateY(-5px);
     border-color: var(--accent-gold);
-    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(212,175,55,0.15);
 }
-
 .brand-logo-wrapper {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1rem;
-    border-radius: 8px;
-    background: #ffffff; /* White background to match the original logos look */
-    padding: 0.5rem;
-    overflow: hidden;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+    padding: 10px;
 }
+.brand-logo-wrapper img { width: 100%; height: 100%; object-fit: contain; }
+.brand-name { font-weight: 700; font-size: 1rem; color: var(--text-main); display: block; }
+.brand-count { font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 4px; }
 
-.brand-logo-wrapper img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-.brand-details {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.brand-name {
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: var(--text-main);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.brand-count {
-    font-size: 0.8rem;
+/* Filter chips */
+.filter-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--sidebar-bg);
     color: var(--text-muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.filter-chip.active, .filter-chip:hover {
+    background: var(--accent-gold);
+    color: #000;
+    border-color: var(--accent-gold);
+    font-weight: 600;
 }
 
-/* Modal Styling */
+/* Modal */
 .modal-overlay {
+    display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-    display: flex;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 1000;
 }
-
-.modal-overlay:target {
-    opacity: 1;
-    pointer-events: auto;
-}
-
+.modal-overlay:target { display: flex; }
 .modal-content {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 2rem;
     width: 90%;
-    max-width: 500px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
+    max-width: 480px;
 }
-
-.modal-overlay:target .modal-content {
-    transform: translateY(0);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-}
-
-.modal-header h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--accent-gold);
-}
-
-.close-btn {
-    font-size: 2rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.3s;
-    line-height: 1;
-}
-
-.close-btn:hover {
-    color: var(--danger);
-}
-</style>
-
-<style>
-.brand-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+.close-btn { color: var(--text-muted); font-size: 1.5rem; text-decoration: none; line-height: 1; }
+.close-btn:hover { color: var(--text-main); }
 </style>
 
 <script>
-document.getElementById('search-brand').addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase();
-    const links = document.querySelectorAll('.brand-card-link');
-    links.forEach(link => {
-        const name = link.getAttribute('data-name');
-        link.style.display = name.includes(query) ? 'block' : 'none';
+let activeType = 'all';
+
+const searchInput  = document.getElementById('search-brand');
+const prixMinInput = document.getElementById('prix-min');
+const prixMaxInput = document.getElementById('prix-max');
+const anneeMinInput = document.getElementById('annee-min');
+const anneeMaxInput = document.getElementById('annee-max');
+
+// Type chip clicks
+document.querySelectorAll('.filter-chip[data-filter="type"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip[data-filter="type"]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeType = btn.dataset.val;
+        applyFilters();
     });
 });
+
+// Text / number inputs
+[searchInput, prixMinInput, prixMaxInput, anneeMinInput, anneeMaxInput].forEach(el => {
+    el.addEventListener('input', applyFilters);
+});
+
+function applyFilters() {
+    const q        = searchInput.value.toLowerCase().trim();
+    const prixMin  = prixMinInput.value  !== '' ? parseFloat(prixMinInput.value)  : null;
+    const prixMax  = prixMaxInput.value  !== '' ? parseFloat(prixMaxInput.value)  : null;
+    const anneeMin = anneeMinInput.value !== '' ? parseInt(anneeMinInput.value)   : null;
+    const anneeMax = anneeMaxInput.value !== '' ? parseInt(anneeMaxInput.value)   : null;
+
+    const filtersActive = (prixMin !== null || prixMax !== null ||
+                           anneeMin !== null || anneeMax !== null ||
+                           activeType !== 'all');
+
+    let visibleCards = 0;
+
+    document.querySelectorAll('.brand-card-link[data-marque-id]').forEach(card => {
+        const marqueId   = parseInt(card.dataset.marqueId);
+        const marqueName = card.dataset.name; // already lowercase
+
+        // 1. Brand name search
+        const nameMatch = q === '' || marqueName.includes(q);
+
+        // 2. Count cars for this brand that pass the price/year/type filters
+        let matchCount = 0;
+        if (filtersActive || nameMatch) {
+            matchCount = ALL_CARS.filter(c => {
+                if (c.id_marque !== marqueId) return false;
+                if (activeType !== 'all' && c.type !== activeType) return false;
+                if (prixMin  !== null && c.prix_vente < prixMin)  return false;
+                if (prixMax  !== null && c.prix_vente > prixMax)  return false;
+                if (anneeMin !== null && c.annee      < anneeMin) return false;
+                if (anneeMax !== null && c.annee      > anneeMax) return false;
+                return true;
+            }).length;
+        }
+
+        // Show card if name matches AND (no price/year/type filter active, or has matching cars)
+        const show = nameMatch && (!filtersActive || matchCount > 0);
+
+        card.style.display = show ? '' : 'none';
+
+        // Update count label when filters are active
+        const countEl = document.getElementById('count-' + marqueId);
+        if (countEl) {
+            if (filtersActive) {
+                countEl.textContent = matchCount + (matchCount !== 1 ? ' voitures' : ' voiture');
+            } else {
+                // Restore original server-rendered count (stored as data attribute)
+                countEl.textContent = countEl.dataset.original;
+            }
+        }
+
+        if (show) visibleCards++;
+    });
+
+    document.getElementById('no-results').style.display = visibleCards === 0 ? 'block' : 'none';
+}
+
+function resetFilters() {
+    searchInput.value = '';
+    prixMinInput.value = '';
+    prixMaxInput.value = '';
+    anneeMinInput.value = '';
+    anneeMaxInput.value = '';
+    activeType = 'all';
+    document.querySelectorAll('.filter-chip[data-filter="type"]').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === 'all');
+    });
+    applyFilters();
+}
+
+// Store original counts so we can restore them when filters are cleared
+document.querySelectorAll('.brand-card-link[data-marque-id]').forEach(card => {
+    const id = card.dataset.marqueId;
+    const countEl = document.getElementById('count-' + id);
+    if (countEl) countEl.dataset.original = countEl.textContent.trim();
+});
 </script>
+
 {% endblock %}
