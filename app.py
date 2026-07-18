@@ -557,16 +557,51 @@ def marques():
         cur.execute('INSERT INTO marque (nom_marque) VALUES (?)', (nom_marque,))
         db.commit()
         return redirect(url_for('marques'))
-        
-    cur.execute('''
-        SELECT m.id_marque, m.nom_marque, COUNT(v.vin) as voiture_count
-        FROM marque m
-        LEFT JOIN modele mod ON m.id_marque = mod.id_marque
-        LEFT JOIN voiture v ON mod.id_modele = v.id_modele
-        GROUP BY m.id_marque
-    ''')
+
+    is_client = g.user and g.user['role'] == 'user'
+
+    # Brand cards — clients see only en_stock count, admin sees all
+    if is_client:
+        cur.execute("""
+            SELECT m.id_marque, m.nom_marque,
+                   COUNT(v.vin) as voiture_count
+            FROM marque m
+            LEFT JOIN modele mod ON m.id_marque = mod.id_marque
+            LEFT JOIN voiture v ON mod.id_modele = v.id_modele
+                                AND v.statut = 'en_stock'
+            GROUP BY m.id_marque
+            ORDER BY m.nom_marque
+        """)
+    else:
+        cur.execute("""
+            SELECT m.id_marque, m.nom_marque,
+                   COUNT(v.vin) as voiture_count
+            FROM marque m
+            LEFT JOIN modele mod ON m.id_marque = mod.id_marque
+            LEFT JOIN voiture v ON mod.id_modele = v.id_modele
+            GROUP BY m.id_marque
+            ORDER BY m.nom_marque
+        """)
     marques_list = cur.fetchall()
-    return render_template('marques.html', marques=marques_list)
+
+    # All cars for client-side filtering on the marques page
+    if is_client:
+        cur.execute("""
+            SELECT mod.id_marque, v.annee, v.prix_vente, v.type
+            FROM voiture v
+            JOIN modele mod ON v.id_modele = mod.id_modele
+            WHERE v.statut = 'en_stock'
+        """)
+    else:
+        cur.execute("""
+            SELECT mod.id_marque, v.annee, v.prix_vente, v.type, v.statut
+            FROM voiture v
+            JOIN modele mod ON v.id_modele = mod.id_modele
+        """)
+    all_cars = [dict(row) for row in cur.fetchall()]
+
+    return render_template('marques.html', marques=marques_list,
+                           all_cars=all_cars, is_client=is_client)
 
 @app.route('/marques/<int:id_marque>')
 @login_required
