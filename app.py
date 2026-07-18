@@ -555,6 +555,50 @@ def ventes_add():
     
     return render_template('ventes_add.html', clients=clients, voitures=voitures, agents=agents)
 
+@app.route('/achats/add', methods=('GET', 'POST'))
+@admin_required
+def achats_add():
+    db = get_db()
+    cur = db.cursor()
+
+    if request.method == 'POST':
+        date_cmd = request.form['date_cmd']
+        id_fournisseur = request.form['id_fournisseur']
+        vin = request.form['vin']
+
+        cur.execute(
+            'INSERT INTO commande_achat (date_cmd, id_fournisseur) VALUES (?, ?)',
+            (date_cmd, id_fournisseur)
+        )
+        id_cmdA = cur.lastrowid
+
+        cur.execute(
+            'INSERT INTO ligne_achat (id_cmdA, vin) VALUES (?, ?)',
+            (id_cmdA, vin)
+        )
+
+        db.commit()
+        return redirect(url_for('transactions'))
+
+    cur.execute('SELECT id_fournisseur, nom FROM fournisseur ORDER BY nom')
+    fournisseurs = cur.fetchall()
+
+    cur.execute('SELECT id_marque, nom_marque FROM marque ORDER BY nom_marque')
+    marques = cur.fetchall()
+
+    cur.execute('''
+        SELECT v.vin, v.immatriculation, v.prix_achat,
+               m.nom_modele, mq.nom_marque, mq.id_marque
+        FROM voiture v
+        JOIN modele m ON v.id_modele = m.id_modele
+        JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE v.statut = 'en_stock'
+        ORDER BY mq.nom_marque, m.nom_modele
+    ''')
+    voitures = cur.fetchall()
+
+    return render_template('achat_add.html', fournisseurs=fournisseurs, marques=marques, voitures=voitures)
+
 @app.route('/devis/<vin>/<int:id_client>')
 @admin_required
 def devis(vin, id_client):

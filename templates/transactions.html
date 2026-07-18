@@ -60,7 +60,7 @@
             <h2 style="font-size: 1.1rem; font-weight: 600;">Historique des Achats</h2>
             <div>
                 <button onclick="window.print()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background-color: #475569; margin-right: 5px;"><i class='bx bx-printer'></i> Imprimer</button>
-                <a href="#" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i class='bx bx-cart-download'></i> Nouvel Achat</a>
+                <a href="{{ url_for('achats_add') }}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i class='bx bx-cart-download'></i> Nouvel Achat</a>
             </div>
         </div>
         <table>

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvel Achat - LuxeDrive{% endblock %}
+{% block page_title %}Enregistrer un Achat{% endblock %}
+
+{% block content %}
+<div class="header-actions">
+    <a href="{{ url_for('transactions') }}" class="btn" style="background-color: var(--sidebar-bg); border: 1px solid var(--border-color);"><i class='bx bx-arrow-back'></i> Retour</a>
+</div>
+
+<div class="form-container">
+    {% if error %}
+    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+        <i class='bx bx-error-circle' style="font-size: 1.25rem;"></i>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('achats_add') }}">
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label for="date_cmd">Date d'Achat</label>
+                <input type="date" id="date_cmd" name="date_cmd" required>
+            </div>
+
+            <div class="form-group">
+                <label for="id_fournisseur">Fournisseur</label>
+                <select id="id_fournisseur" name="id_fournisseur" required>
+                    <option value="" disabled selected>Sélectionner un fournisseur</option>
+                    {% for f in fournisseurs %}
+                        <option value="{{ f.id_fournisseur }}">{{ f.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="id_marque">Marque</label>
+                <select id="id_marque" name="id_marque" required>
+                    <option value="" disabled selected>Sélectionner une marque</option>
+                    {% for m in marques %}
+                        <option value="{{ m.id_marque }}">{{ m.nom_marque }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="vin">Voiture (VIN)</label>
+                <select id="vin" name="vin" required>
+                    <option value="" disabled selected>Sélectionner d'abord une marque</option>
+                    {% for v in voitures %}
+                        <option value="{{ v.vin }}" data-marque="{{ v.id_marque }}">
+                            {{ v.nom_marque }} {{ v.nom_modele }} ({{ v.immatriculation }}) — {{ "{:,.2f}".format(v.prix_achat) }} MAD
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                    <i class='bx bx-info-circle'></i> Sélectionnez une marque pour filtrer les voitures disponibles. La commande d'achat sera enregistrée avec le fournisseur et la voiture choisie.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="form-actions" style="margin-top: 2rem; text-align: right;">
+            <button type="submit" class="btn"><i class='bx bx-check'></i> Valider l'Achat</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Set today's date by default
+    document.getElementById('date_cmd').valueAsDate = new Date();
+
+    // Filter voitures by selected marque
+    const marqueSelect = document.getElementById('id_marque');
+    const vinSelect = document.getElementById('vin');
+    const allOptions = Array.from(vinSelect.options);
+
+    marqueSelect.addEventListener('change', function () {
+        const selectedMarque = this.value;
+
+        // Remove all car options (keep only the placeholder)
+        vinSelect.innerHTML = '<option value="" disabled selected>Sélectionner une voiture</option>';
+
+        const filtered = allOptions.filter(opt => opt.dataset.marque === selectedMarque);
+
+        if (filtered.length === 0) {
+            const empty = document.createElement('option');
+            empty.disabled = true;
+            empty.textContent = 'Aucune voiture disponible pour cette marque';
+            vinSelect.appendChild(empty);
+        } else {
+            filtered.forEach(opt => vinSelect.appendChild(opt.cloneNode(true)));
+        }
+
+        vinSelect.value = '';
+    });
+</script>
+{% endblock %}
