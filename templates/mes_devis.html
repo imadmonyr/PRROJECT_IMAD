@@ -105,7 +105,7 @@
         </td>
         <td>
           {% if d.statut == 'en_stock' %}
-          <a href="{{ url_for('client_devis', vin=d.vin) }}" class="btn" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">
+          <a href="{{ url_for('client_devis_view', id_devis=d.id_devis) }}" class="btn" style="padding:5px 12px;font-size:0.78rem;white-space:nowrap;">
             <i class='bx bx-file'></i> Revoir
           </a>
           {% else %}

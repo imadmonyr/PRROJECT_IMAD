@@ -1128,22 +1128,60 @@ def client_devis(vin):
         return redirect(url_for('marques'))
 
     id_client = g.user['id_client']
-    cur.execute('SELECT * FROM client WHERE id_client = ?', (id_client,))
-    client = cur.fetchone()
-
     from datetime import date
-    today = date.today().strftime('%d/%m/%Y')
     devis_num = f"{date.today().strftime('%Y%m%d')}-{vin[-4:]}"
-    back_url = url_for('marque_detail', id_marque=voiture['id_marque'])
-    # Save devis to DB
+
+    # Insert devis (ignore if duplicate devis_num already exists for this client+vin today)
     try:
         db.execute('INSERT INTO devis (vin,id_client,date_devis,prix_vente,devis_num) VALUES (?,?,?,?,?)',
                    (vin, id_client, date.today().strftime('%Y-%m-%d'), voiture['prix_vente'], devis_num))
         db.commit()
     except Exception:
         pass
-    return render_template('devis.html', voiture=voiture, client=client,
-                           date_today=today, devis_num=devis_num, back_url=back_url)
+
+    # Redirect to mes-devis so the client sees their list (no duplicate on browser back)
+    return redirect(url_for('mes_devis'))
+
+
+@app.route('/client/devis/view/<int:id_devis>')
+@login_required
+def client_devis_view(id_devis):
+    """View an existing devis — read-only, never creates a new record."""
+    if g.user['role'] != 'user':
+        return redirect(url_for('marques'))
+
+    db = get_db()
+    cur = db.cursor()
+    id_client = g.user['id_client']
+
+    cur.execute('''
+        SELECT d.id_devis, d.devis_num, d.date_devis, d.prix_vente,
+               v.vin, v.type, v.immatriculation, v.annee, v.statut,
+               m.nom_modele, mq.nom_marque, mq.id_marque
+        FROM devis d
+        JOIN voiture v  ON d.vin = v.vin
+        JOIN modele m   ON v.id_modele = m.id_modele
+        JOIN marque mq  ON m.id_marque = mq.id_marque
+        WHERE d.id_devis = ? AND d.id_client = ?
+    ''', (id_devis, id_client))
+    row = cur.fetchone()
+
+    if not row:
+        return redirect(url_for('mes_devis'))
+
+    cur.execute('SELECT * FROM client WHERE id_client = ?', (id_client,))
+    client = cur.fetchone()
+
+    from datetime import datetime
+    try:
+        date_today = datetime.strptime(row['date_devis'], '%Y-%m-%d').strftime('%d/%m/%Y')
+    except Exception:
+        date_today = row['date_devis']
+
+    back_url = url_for('mes_devis')
+    return render_template('devis.html', voiture=row, client=client,
+                           date_today=date_today, devis_num=row['devis_num'],
+                           back_url=back_url)
 
 @app.route('/client/mes-devis')
 @login_required
