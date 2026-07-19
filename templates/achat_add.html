@@ -17,6 +17,11 @@
     {% endif %}
 
     <form method="POST" action="{{ url_for('achats_add') }}">
+        <!-- hidden field so POST knows which supplier page to go back to -->
+        {% if preselect_fournisseur %}
+        <input type="hidden" name="ref_fournisseur" value="{{ preselect_fournisseur }}">
+        {% endif %}
+
         <div class="form-grid">
 
             <div class="form-group">
@@ -27,9 +32,12 @@
             <div class="form-group">
                 <label for="id_fournisseur">Fournisseur</label>
                 <select id="id_fournisseur" name="id_fournisseur" required>
-                    <option value="" disabled selected>Sélectionner un fournisseur</option>
+                    <option value="" disabled {% if not preselect_fournisseur %}selected{% endif %}>Sélectionner un fournisseur</option>
                     {% for f in fournisseurs %}
-                        <option value="{{ f.id_fournisseur }}">{{ f.nom }}</option>
+                        <option value="{{ f.id_fournisseur }}"
+                            {% if preselect_fournisseur and f.id_fournisseur == preselect_fournisseur %}selected{% endif %}>
+                            {{ f.nom }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
@@ -38,7 +46,7 @@
                 <label for="id_marque">Marque</label>
                 <select id="id_marque" name="id_marque" required>
                     <option value="" disabled selected>Sélectionner une marque</option>
-                    {% for m in marques %}
+                    {% for m in all_marques %}
                         <option value="{{ m.id_marque }}">{{ m.nom_marque }}</option>
                     {% endfor %}
                 </select>
@@ -57,8 +65,9 @@
             </div>
 
             <div class="form-group" style="grid-column: 1 / -1;">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">
-                    <i class='bx bx-info-circle'></i> Sélectionnez une marque pour filtrer les voitures disponibles. La commande d'achat sera enregistrée avec le fournisseur et la voiture choisie.
+                <p style="font-size: 0.9rem; color: var(--text-muted);" id="filter-hint">
+                    <i class='bx bx-info-circle'></i>
+                    Sélectionnez un fournisseur pour filtrer les marques disponibles, puis une marque pour voir les voitures.
                 </p>
             </div>
 
@@ -71,22 +80,52 @@
 </div>
 
 <script>
-    // Set today's date by default
     document.getElementById('date_cmd').valueAsDate = new Date();
 
-    // Filter voitures by selected marque
-    const marqueSelect = document.getElementById('id_marque');
-    const vinSelect = document.getElementById('vin');
-    const allOptions = Array.from(vinSelect.options);
+    // Supplier → brands mapping from server
+    const supplierBrands = {{ supplier_brands_json | safe }};
 
-    marqueSelect.addEventListener('change', function () {
-        const selectedMarque = this.value;
+    const fournisseurSelect = document.getElementById('id_fournisseur');
+    const marqueSelect      = document.getElementById('id_marque');
+    const vinSelect         = document.getElementById('vin');
+    const allVinOptions     = Array.from(vinSelect.options).slice(1); // skip placeholder
 
-        // Remove all car options (keep only the placeholder)
+    // All brand options from the server-rendered select
+    const allMarqueOptions = Array.from(marqueSelect.options).slice(1); // skip placeholder
+
+    function buildMarqueOptions(fournisseurId) {
+        // Remove all brand options except placeholder
+        marqueSelect.innerHTML = '<option value="" disabled selected>Sélectionner une marque</option>';
+        vinSelect.innerHTML    = '<option value="" disabled selected>Sélectionner d\'abord une marque</option>';
+
+        const brands = fournisseurId ? supplierBrands[fournisseurId] : null;
+
+        if (brands && brands.length > 0) {
+            // Only show the supplier's brands
+            const allowedIds = new Set(brands.map(b => b.id));
+            allMarqueOptions.forEach(opt => {
+                if (allowedIds.has(opt.value)) {
+                    marqueSelect.appendChild(opt.cloneNode(true));
+                }
+            });
+            document.getElementById('filter-hint').innerHTML =
+                '<i class=\'bx bx-filter-alt\'></i> Marques filtrées selon ce fournisseur. Choisissez une marque pour voir les véhicules disponibles.';
+        } else if (fournisseurId && !brands) {
+            // Supplier has no brands configured — show all with a warning
+            allMarqueOptions.forEach(opt => marqueSelect.appendChild(opt.cloneNode(true)));
+            document.getElementById('filter-hint').innerHTML =
+                '<i class=\'bx bx-info-circle\'></i> Ce fournisseur n\'a pas de marques configurées. Toutes les marques sont affichées.';
+        } else {
+            // No supplier selected — show all
+            allMarqueOptions.forEach(opt => marqueSelect.appendChild(opt.cloneNode(true)));
+            document.getElementById('filter-hint').innerHTML =
+                '<i class=\'bx bx-info-circle\'></i> Sélectionnez un fournisseur pour filtrer les marques disponibles, puis une marque pour voir les voitures.';
+        }
+    }
+
+    function buildVinOptions(marqueId) {
         vinSelect.innerHTML = '<option value="" disabled selected>Sélectionner une voiture</option>';
-
-        const filtered = allOptions.filter(opt => opt.dataset.marque === selectedMarque);
-
+        const filtered = allVinOptions.filter(opt => opt.dataset.marque === marqueId);
         if (filtered.length === 0) {
             const empty = document.createElement('option');
             empty.disabled = true;
@@ -95,8 +134,22 @@
         } else {
             filtered.forEach(opt => vinSelect.appendChild(opt.cloneNode(true)));
         }
-
         vinSelect.value = '';
+    }
+
+    fournisseurSelect.addEventListener('change', function () {
+        buildMarqueOptions(this.value);
+        marqueSelect.value = '';
     });
+
+    marqueSelect.addEventListener('change', function () {
+        buildVinOptions(this.value);
+    });
+
+    // On load: if a supplier is pre-selected, filter immediately
+    const preselect = '{{ preselect_fournisseur or "" }}';
+    if (preselect) {
+        buildMarqueOptions(preselect);
+    }
 </script>
 {% endblock %}

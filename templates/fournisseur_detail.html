@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% block title %}{{ fournisseur.nom }} - LuxeDrive{% endblock %}
+{% block page_title %}Fournisseur{% endblock %}
+
+{% block content %}
+<style>
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #666; font-size: 0.85rem; text-decoration: none;
+    margin-bottom: 20px; transition: color 0.2s;
+  }
+  .back-link:hover { color: #fff; }
+
+  /* Profile card */
+  .profile-card {
+    background: #0f0f0f;
+    border: 1px solid #1e1e1e;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .profile-header {
+    background: linear-gradient(135deg, #990000 0%, #6b0000 100%);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .profile-header-left { display: flex; align-items: center; gap: 16px; }
+  .profile-avatar {
+    width: 56px; height: 56px; border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; color: #fff; flex-shrink: 0;
+  }
+  .profile-name { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .profile-sub { font-size: 0.82rem; color: rgba(255,255,255,0.6); }
+  .profile-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-achat {
+    background: #D4AF37; color: #000; border: none; border-radius: 8px;
+    padding: 10px 20px; font-size: 0.875rem; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .btn-achat:hover { background: #f0cc55; }
+  .btn-edit-sm {
+    background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 10px 16px; font-size: 0.875rem; font-weight: 500;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .btn-edit-sm:hover { background: rgba(255,255,255,0.2); }
+
+  .profile-body {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0; padding: 0;
+  }
+  .info-item {
+    padding: 18px 24px;
+    border-right: 1px solid #1e1e1e;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  .info-item:last-child { border-right: none; }
+  .info-label { font-size: 0.7rem; color: #555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+  .info-value { font-size: 0.95rem; color: #e5e7eb; font-weight: 500; }
+  .info-value.dim { color: #3a3a3a; }
+
+  /* Section headers */
+  .section-title {
+    font-size: 0.8rem; font-weight: 700; color: #555; text-transform: uppercase;
+    letter-spacing: 0.08em; margin: 28px 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title i { color: #990000; font-size: 1rem; }
+  .section-title span.count {
+    background: #990000; color: #fff; font-size: 0.7rem; padding: 1px 8px;
+    border-radius: 10px; font-weight: 600; letter-spacing: 0;
+  }
+
+  /* Brands grid */
+  .brands-grid {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;
+  }
+  .brand-tile {
+    background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 10px;
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+    min-width: 160px; transition: border-color 0.2s;
+  }
+  .brand-tile:hover { border-color: #333; }
+  .brand-tile img { width: 36px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); }
+  .brand-tile-name { font-size: 0.9rem; font-weight: 600; color: #e5e7eb; }
+  .brand-tile-sub { font-size: 0.75rem; color: #555; margin-top: 2px; }
+
+  /* Models list */
+  .models-by-brand { margin-bottom: 16px; }
+  .models-brand-label {
+    font-size: 0.75rem; color: #777; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .models-brand-label i { color: #D4AF37; }
+  .models-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+  .model-pill {
+    background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2);
+    color: #D4AF37; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 32px; text-align: center; color: #3a3a3a;
+  }
+  .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+  .empty-state p { font-size: 0.85rem; }
+
+  /* Cars table */
+  .table-wrap {
+    background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 12px; overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid #151515; }
+  th { background: #080808; font-size: 0.72rem; color: #555; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  .td-vin { font-family: monospace; font-size: 0.82rem; color: #888; }
+  .badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge.en_stock { background: rgba(16,185,129,0.15); color: #10b981; }
+  .badge.vendue   { background: rgba(153,0,0,0.2); color: #cc2222; }
+  .badge.reservee { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .price { font-weight: 600; color: #e5e7eb; font-size: 0.9rem; }
+  .price-sub { font-size: 0.72rem; color: #555; }
+  .link-vin {
+    color: #888; text-decoration: none; font-family: monospace; font-size: 0.82rem;
+    transition: color 0.2s;
+  }
+  .link-vin:hover { color: #D4AF37; }
+  .order-id { font-size: 0.8rem; color: #555; font-family: monospace; }
+</style>
+
+<a href="{{ url_for('fournisseurs') }}" class="back-link">
+  <i class='bx bx-arrow-back'></i> Retour aux Fournisseurs
+</a>
+
+<!-- Profile Card -->
+<div class="profile-card">
+  <div class="profile-header">
+    <div class="profile-header-left">
+      <div class="profile-avatar"><i class='bx bx-store-alt'></i></div>
+      <div>
+        <div class="profile-name">{{ fournisseur.nom }}</div>
+        <div class="profile-sub">
+          {% if fournisseur.pays %}{{ fournisseur.pays }}{% endif %}
+          {% if fournisseur.pays and fournisseur.ice %} · {% endif %}
+          {% if fournisseur.ice %}ICE: {{ fournisseur.ice }}{% endif %}
+          {% if not fournisseur.pays and not fournisseur.ice %}Fournisseur{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <a href="{{ url_for('achats_add', id_fournisseur=fournisseur.id_fournisseur) }}" class="btn-achat">
+        <i class='bx bx-plus'></i> Nouvel Achat
+      </a>
+      <a href="{{ url_for('fournisseur_edit', id_fournisseur=fournisseur.id_fournisseur) }}" class="btn-edit-sm">
+        <i class='bx bx-edit'></i> Modifier
+      </a>
+    </div>
+  </div>
+  <div class="profile-body">
+    <div class="info-item">
+      <div class="info-label">Téléphone</div>
+      <div class="info-value {% if not fournisseur.telephone %}dim{% endif %}">{{ fournisseur.telephone or '—' }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Email</div>
+      <div class="info-value {% if not fournisseur.email %}dim{% endif %}">{{ fournisseur.email or '—' }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Contact Personnel</div>
+      <div class="info-value {% if not fournisseur.contact_personnel %}dim{% endif %}">{{ fournisseur.contact_personnel or '—' }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Délai Livraison</div>
+      <div class="info-value {% if not fournisseur.delai_livraison %}dim{% endif %}">{{ fournisseur.delai_livraison or '—' }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Adresse</div>
+      <div class="info-value {% if not fournisseur.adresse %}dim{% endif %}">{{ fournisseur.adresse or '—' }}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Commandes Totales</div>
+      <div class="info-value">{{ achats | length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Brands Supplied -->
+<div class="section-title">
+  <i class='bx bx-purchase-tag-alt'></i> Marques Fournies
+  <span class="count">{{ marques | length }}</span>
+</div>
+
+{% if marques %}
+<div class="brands-grid">
+  {% for mq in marques %}
+  {% set logo_name = mq.nom_marque | lower | replace(' ', '_') | replace('-', '_') %}
+  <div class="brand-tile">
+    <img src="/static/logos/{{ logo_name }}.svg"
+         onerror="this.src='/static/logos/default.svg'"
+         alt="{{ mq.nom_marque }}">
+    <div>
+      <div class="brand-tile-name">{{ mq.nom_marque }}</div>
+      {% set nb_modeles = modeles | selectattr('id_marque', 'equalto', mq.id_marque) | list | length %}
+      <div class="brand-tile-sub">{{ nb_modeles }} modèle{{ 's' if nb_modeles != 1 }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty-state">
+    <i class='bx bx-purchase-tag-alt'></i>
+    <p>Aucune marque associée à ce fournisseur.<br>
+    <a href="{{ url_for('fournisseur_edit', id_fournisseur=fournisseur.id_fournisseur) }}" style="color:#990000;">Modifier le fournisseur</a> pour en ajouter.</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Models by Brand -->
+{% if modeles %}
+<div class="section-title" style="margin-top:20px;">
+  <i class='bx bx-car'></i> Modèles par Marque
+</div>
+<div class="models-by-brand">
+  {% set seen_brands = [] %}
+  {% for mq in marques %}
+    {% set brand_models = modeles | selectattr('id_marque', 'equalto', mq.id_marque) | list %}
+    {% if brand_models %}
+    <div class="models-brand-label"><i class='bx bx-right-arrow-alt'></i> {{ mq.nom_marque }}</div>
+    <div class="models-pills">
+      {% for m in brand_models %}
+      <span class="model-pill">{{ m.nom_modele }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Cars from this supplier (by brand) -->
+<div class="section-title">
+  <i class='bx bx-list-ul'></i> Véhicules de ces Marques en Base
+  <span class="count">{{ voitures | length }}</span>
+</div>
+
+{% if voitures %}
+<div class="table-wrap" style="margin-bottom:28px;">
+  <table>
+    <thead>
+      <tr>
+        <th>Marque &amp; Modèle</th>
+        <th>VIN</th>
+        <th>Immatriculation</th>
+        <th>Année</th>
+        <th>Type</th>
+        <th>Prix Vente</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in voitures %}
+      <tr>
+        <td style="font-weight:600;">{{ v.nom_marque }} {{ v.nom_modele }}</td>
+        <td><a href="{{ url_for('voiture_detail', vin=v.vin) }}" class="link-vin">{{ v.vin }}</a></td>
+        <td style="color:#aaa;">{{ v.immatriculation }}</td>
+        <td style="color:#888;">{{ v.annee }}</td>
+        <td style="color:#888;text-transform:capitalize;">{{ v.type }}</td>
+        <td>
+          <div class="price">{{ "{:,.0f}".format(v.prix_vente) }} <span class="price-sub">MAD</span></div>
+          <div class="price-sub">Achat: {{ "{:,.0f}".format(v.prix_achat) }} MAD</div>
+        </td>
+        <td><span class="badge {{ v.statut }}">{{ v.statut | replace('_', ' ') | title }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap" style="margin-bottom:28px;">
+  <div class="empty-state">
+    <i class='bx bx-car'></i>
+    <p>Aucun véhicule de ces marques en base de données.</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Purchase History -->
+<div class="section-title">
+  <i class='bx bx-package'></i> Historique des Achats
+  <span class="count">{{ achats | length }}</span>
+</div>
+
+{% if achats %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Commande #</th>
+        <th>Date</th>
+        <th>Marque &amp; Modèle</th>
+        <th>VIN</th>
+        <th>Immatriculation</th>
+        <th>Prix Achat</th>
+        <th>Statut Actuel</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in achats %}
+      <tr>
+        <td><span class="order-id">#{{ a.id_cmdA }}</span></td>
+        <td style="color:#888;font-size:0.85rem;">{{ a.date_cmd }}</td>
+        <td style="font-weight:600;">{{ a.nom_marque }} {{ a.nom_modele }}</td>
+        <td><a href="{{ url_for('voiture_detail', vin=a.vin) }}" class="link-vin">{{ a.vin }}</a></td>
+        <td style="color:#aaa;">{{ a.immatriculation }}</td>
+        <td class="price">{{ "{:,.0f}".format(a.prix_achat) }} <span class="price-sub">MAD</span></td>
+        <td><span class="badge {{ a.statut }}">{{ a.statut | replace('_', ' ') | title }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty-state">
+    <i class='bx bx-package'></i>
+    <p>Aucun achat enregistré pour ce fournisseur.<br>
+    Utilisez le bouton <strong>Nouvel Achat</strong> ci-dessus pour en créer un.</p>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

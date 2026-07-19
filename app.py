@@ -725,6 +725,66 @@ def fournisseur_delete(id_fournisseur):
     flash('Fournisseur supprimé.', 'success')
     return redirect(url_for('fournisseurs'))
 
+
+@app.route('/fournisseurs/<int:id_fournisseur>')
+@admin_required
+def fournisseur_detail(id_fournisseur):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute('SELECT * FROM fournisseur WHERE id_fournisseur=?', (id_fournisseur,))
+    fournisseur = cur.fetchone()
+    if not fournisseur:
+        flash('Fournisseur introuvable.', 'error')
+        return redirect(url_for('fournisseurs'))
+    cur.execute('''
+        SELECT mq.id_marque, mq.nom_marque
+        FROM fournisseur_marque fm
+        JOIN marque mq ON fm.id_marque = mq.id_marque
+        WHERE fm.id_fournisseur = ?
+        ORDER BY mq.nom_marque
+    ''', (id_fournisseur,))
+    marques = cur.fetchall()
+    cur.execute('''
+        SELECT m.id_modele, m.nom_modele, mq.nom_marque, mq.id_marque
+        FROM fournisseur_modele fm
+        JOIN modele m ON fm.id_modele = m.id_modele
+        JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE fm.id_fournisseur = ?
+        ORDER BY mq.nom_marque, m.nom_modele
+    ''', (id_fournisseur,))
+    modeles = cur.fetchall()
+    cur.execute('''
+        SELECT ca.id_cmdA, ca.date_cmd,
+               v.vin, v.immatriculation, v.prix_achat, v.statut,
+               m.nom_modele, mq.nom_marque
+        FROM commande_achat ca
+        JOIN ligne_achat la ON ca.id_cmdA = la.id_cmdA
+        JOIN voiture v ON la.vin = v.vin
+        JOIN modele m ON v.id_modele = m.id_modele
+        JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE ca.id_fournisseur = ?
+        ORDER BY ca.date_cmd DESC
+    ''', (id_fournisseur,))
+    achats = cur.fetchall()
+    cur.execute('''
+        SELECT v.vin, v.immatriculation, v.prix_achat, v.prix_vente, v.annee, v.type, v.statut,
+               m.nom_modele, mq.nom_marque
+        FROM voiture v
+        JOIN modele m ON v.id_modele = m.id_modele
+        JOIN marque mq ON m.id_marque = mq.id_marque
+        WHERE mq.id_marque IN (
+            SELECT id_marque FROM fournisseur_marque WHERE id_fournisseur = ?
+        )
+        ORDER BY v.statut, mq.nom_marque, m.nom_modele
+    ''', (id_fournisseur,))
+    voitures = cur.fetchall()
+    return render_template('fournisseur_detail.html',
+                           fournisseur=fournisseur,
+                           marques=marques,
+                           modeles=modeles,
+                           achats=achats,
+                           voitures=voitures)
+
 @app.route('/marques', methods=('GET', 'POST'))
 @login_required
 def marques():
@@ -981,6 +1041,7 @@ def ventes_add():
 @app.route('/achats/add', methods=('GET', 'POST'))
 @admin_required
 def achats_add():
+    import json as _json
     db = get_db()
     cur = db.cursor()
 
@@ -988,26 +1049,43 @@ def achats_add():
         date_cmd = request.form['date_cmd']
         id_fournisseur = request.form['id_fournisseur']
         vin = request.form['vin']
-
         cur.execute(
             'INSERT INTO commande_achat (date_cmd, id_fournisseur) VALUES (?, ?)',
             (date_cmd, id_fournisseur)
         )
         id_cmdA = cur.lastrowid
-
         cur.execute(
             'INSERT INTO ligne_achat (id_cmdA, vin) VALUES (?, ?)',
             (id_cmdA, vin)
         )
-
         db.commit()
+        flash('Achat enregistré avec succès.', 'success')
+        ref = request.form.get('ref_fournisseur')
+        if ref:
+            return redirect(url_for('fournisseur_detail', id_fournisseur=ref))
         return redirect(url_for('transactions'))
+
+    preselect_id = request.args.get('id_fournisseur', type=int)
 
     cur.execute('SELECT id_fournisseur, nom FROM fournisseur ORDER BY nom')
     fournisseurs = cur.fetchall()
 
+    cur.execute('''
+        SELECT fm.id_fournisseur, mq.id_marque, mq.nom_marque
+        FROM fournisseur_marque fm
+        JOIN marque mq ON fm.id_marque = mq.id_marque
+        ORDER BY mq.nom_marque
+    ''')
+    fm_rows = cur.fetchall()
+    supplier_brands = {}
+    for row in fm_rows:
+        sid = str(row['id_fournisseur'])
+        if sid not in supplier_brands:
+            supplier_brands[sid] = []
+        supplier_brands[sid].append({'id': str(row['id_marque']), 'nom': row['nom_marque']})
+
     cur.execute('SELECT id_marque, nom_marque FROM marque ORDER BY nom_marque')
-    marques = cur.fetchall()
+    all_marques = cur.fetchall()
 
     cur.execute('''
         SELECT v.vin, v.immatriculation, v.prix_achat,
@@ -1020,7 +1098,12 @@ def achats_add():
     ''')
     voitures = cur.fetchall()
 
-    return render_template('achat_add.html', fournisseurs=fournisseurs, marques=marques, voitures=voitures)
+    return render_template('achat_add.html',
+                           fournisseurs=fournisseurs,
+                           all_marques=all_marques,
+                           voitures=voitures,
+                           preselect_fournisseur=preselect_id,
+                           supplier_brands_json=_json.dumps(supplier_brands))
 
 @app.route('/client/devis/<vin>')
 @login_required
