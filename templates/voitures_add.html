@@ -4,184 +4,555 @@
 {% block page_title %}Ajouter une Voiture{% endblock %}
 
 {% block content %}
+<style>
+/* ── VIN segment inputs ──────────────────────────── */
+.vin-wrapper {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--input-bg, #1a1a1a);
+    transition: border-color .2s, box-shadow .2s;
+}
+.vin-wrapper:focus-within {
+    border-color: var(--accent, #990000);
+    box-shadow: 0 0 0 2px rgba(153,0,0,.2);
+}
+.vin-seg {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    position: relative;
+}
+.vin-seg-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #555;
+    text-transform: uppercase;
+    padding: 5px 10px 0;
+    user-select: none;
+}
+.vin-seg input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: .95rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: .12em;
+    padding: 4px 10px 8px;
+    width: 100%;
+    text-transform: uppercase;
+}
+/* WMI=3 chars, VDS=6 chars, VIS=8 chars — size by character count */
+.vin-seg.wmi { flex-basis: 90px; }
+.vin-seg.vds { flex-basis: 150px; border-left: 1px solid #2a2a2a; border-right: 1px solid #2a2a2a; }
+.vin-seg.vis { flex-basis: 200px; flex: 1; }
+.vin-seg-badge {
+    position: absolute;
+    right: 6px; top: 5px;
+    font-size: .6rem;
+    color: #555;
+    font-family: 'Courier New', monospace;
+}
+.vin-seg.filled .vin-seg-label { color: #10b981; }
+.vin-seg.filled input { color: #10b981; }
+.vin-seg.error .vin-seg-label  { color: var(--danger, #ef4444); }
+.vin-seg.error input  { color: var(--danger, #ef4444); }
+.vin-full-preview {
+    margin-top: 6px;
+    font-size: .78rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: .1em;
+    color: #555;
+    display: flex;
+    gap: 0;
+}
+.vin-full-preview span { padding: 2px 6px; border-radius: 3px; }
+.vin-full-preview .seg-wmi { background: rgba(99,102,241,.1); color: #818cf8; }
+.vin-full-preview .seg-vds { background: rgba(245,158,11,.1); color: #fbbf24; }
+.vin-full-preview .seg-vis { background: rgba(16,185,129,.1); color: #34d399; }
+.vin-full-preview .sep { color: #2a2a2a; }
+.vin-hint {
+    font-size: .72rem;
+    color: #555;
+    margin-top: 4px;
+}
+.vin-error {
+    font-size: .75rem;
+    color: var(--danger, #ef4444);
+    margin-top: 5px;
+    display: none;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Immatriculation ─────────────────────────────── */
+.immat-input-wrap { position: relative; }
+.immat-input-wrap input {
+    font-family: 'Courier New', monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+/* ── Year select ─────────────────────────────────── */
+select.year-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+/* ── Price fields ────────────────────────────────── */
+.price-wrap { position: relative; }
+.price-wrap .price-currency {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    font-size: .75rem;
+    pointer-events: none;
+}
+.price-wrap input { padding-right: 46px; }
+
+/* ── Validation states ───────────────────────────── */
+input.valid, select.valid { border-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16,185,129,.15) !important; }
+input.invalid, select.invalid { border-color: var(--danger,#ef4444) !important; box-shadow: 0 0 0 2px rgba(239,68,68,.15) !important; }
+.field-msg { font-size: .72rem; margin-top: 4px; display: none; align-items: center; gap: 4px; }
+.field-msg.ok  { color: #10b981; }
+.field-msg.err { color: var(--danger,#ef4444); }
+</style>
+
 <div class="header-actions">
-    <a href="{{ url_for('voitures') }}" class="btn" style="background-color: var(--sidebar-bg); border: 1px solid var(--border-color);"><i class='bx bx-arrow-back'></i> Retour</a>
+    <a href="{{ url_for('voitures') }}" class="btn"
+       style="background-color:var(--sidebar-bg);border:1px solid var(--border-color);">
+        <i class='bx bx-arrow-back'></i> Retour
+    </a>
 </div>
 
 <div class="form-container">
     {% if error %}
-    <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-        <i class='bx bx-error-circle' style="font-size: 1.25rem;"></i>
+    <div style="background:rgba(239,68,68,.15);border:1px solid var(--danger);color:var(--danger);
+                padding:1rem;border-radius:8px;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;">
+        <i class='bx bx-error-circle' style="font-size:1.25rem;"></i>
         <span>{{ error }}</span>
     </div>
     {% endif %}
-    <form method="POST" action="{{ url_for('voitures_add') }}">
+
+    <form method="POST" action="{{ url_for('voitures_add') }}" id="mainForm" novalidate>
+        <!-- Hidden VIN field sent to server -->
+        <input type="hidden" id="vin" name="vin">
+
         <div class="form-grid">
-            <div class="form-group">
-                <label for="vin">Numéro VIN</label>
-                <input type="text" id="vin" name="vin" required placeholder="Ex: WBA00000000000">
-            </div>
-            
-            <div class="form-group">
-                <label for="id_modele">Marque & Modèle</label>
-                <select id="id_modele" name="id_modele" required>
-                    <option value="" disabled selected>Sélectionner un modèle</option>
-                    {% for modele in modeles %}
-                        <option value="{{ modele.id_modele }}">{{ modele.nom_marque }} {{ modele.nom_modele }}</option>
-                    {% endfor %}
-                </select>
+
+            <!-- ── VIN ─────────────────────────────────────── -->
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Numéro VIN <span style="color:#555;font-size:.75rem;">(17 caractères : WMI · VDS · VIS)</span></label>
+                <div class="vin-wrapper" id="vinWrapper">
+                    <div class="vin-seg wmi" id="segWMI">
+                        <span class="vin-seg-label">WMI</span>
+                        <span class="vin-seg-badge">3</span>
+                        <input type="text" id="vinWMI" maxlength="3" placeholder="WBA"
+                               autocomplete="off" spellcheck="false" inputmode="text">
+                    </div>
+                    <div class="vin-seg vds" id="segVDS">
+                        <span class="vin-seg-label">VDS — Description véhicule</span>
+                        <span class="vin-seg-badge">6</span>
+                        <input type="text" id="vinVDS" maxlength="6" placeholder="000000"
+                               autocomplete="off" spellcheck="false" inputmode="text">
+                    </div>
+                    <div class="vin-seg vis" id="segVIS">
+                        <span class="vin-seg-label">VIS — Identification série</span>
+                        <span class="vin-seg-badge">8</span>
+                        <input type="text" id="vinVIS" maxlength="8" placeholder="00000000"
+                               autocomplete="off" spellcheck="false" inputmode="text">
+                    </div>
+                </div>
+                <div class="vin-full-preview" id="vinPreview" style="display:none;">
+                    <span class="seg-wmi" id="pvWMI">WMI</span>
+                    <span class="sep">·</span>
+                    <span class="seg-vds" id="pvVDS">VDS</span>
+                    <span class="sep">·</span>
+                    <span class="seg-vis" id="pvVIS">VIS</span>
+                </div>
+                <div class="vin-hint">
+                    Exemple BMW Allemagne&nbsp;: <code>WBA</code> · <code>5A510</code>1 · <code>R0000001</code>
+                    &nbsp;—&nbsp; Utilisez uniquement lettres (A-Z sauf I O Q) et chiffres.
+                </div>
+                <div class="vin-error" id="vinError">
+                    <i class='bx bx-error-circle'></i> <span id="vinErrorMsg">VIN invalide</span>
+                </div>
             </div>
 
+            <!-- ── Marque & Modèle ────────────────────────── -->
+            <div class="form-group">
+                <label for="id_modele">Marque &amp; Modèle</label>
+                <select id="id_modele" name="id_modele" required onchange="validateSelect(this)">
+                    <option value="" disabled selected>Sélectionner un modèle</option>
+                    {% for modele in modeles %}
+                    <option value="{{ modele.id_modele }}">{{ modele.nom_marque }} — {{ modele.nom_modele }}</option>
+                    {% endfor %}
+                </select>
+                <div class="field-msg err" id="msgModele"><i class='bx bx-error-circle'></i> Sélectionnez un modèle</div>
+            </div>
+
+            <!-- ── État ──────────────────────────────────── -->
             <div class="form-group">
                 <label for="type">État</label>
-                <select id="type" name="type" required>
+                <select id="type" name="type" required onchange="validateSelect(this)">
                     <option value="neuf">Neuf</option>
                     <option value="occasion">Occasion</option>
                 </select>
             </div>
 
-            <div class="form-group" style="position: relative;">
+            <!-- ── Immatriculation ────────────────────────── -->
+            <div class="form-group">
                 <label for="immatriculation">Immatriculation</label>
-                <input type="text" id="immatriculation" name="immatriculation" placeholder="Ex: 1234-A-56" required
-                       pattern="^\s*\d{1,5}\s*-\s*[a-zA-Z\u0621-\u064A\u0671-\u0680]\s*-\s*\d{1,3}\s*$"
-                       title="Le format doit être : 1234-A-56 ou 1234-أ-56 (1 à 5 chiffres, suivi d'un tiret, une lettre en arabe ou français, un tiret, puis 1 à 3 chiffres pour la région)">
-                
-                <div id="plate-preview-wrapper" class="moroccan-plate-wrapper">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 6px 0;">Aperçu de la plaque marocaine :</div>
+                <div class="immat-input-wrap">
+                    <input type="text" id="immatriculation" name="immatriculation"
+                           placeholder="1234-A-20" maxlength="12"
+                           autocomplete="off" spellcheck="false"
+                           title="Format marocain : 1234-A-20">
+                </div>
+                <div id="plate-preview-wrapper" class="moroccan-plate-wrapper" style="display:none;">
+                    <div style="font-size:.85rem;color:var(--text-muted);margin:8px 0 6px 0;">Aperçu plaque marocaine :</div>
                     <div class="moroccan-plate">
                         <div class="plate-ma"><span>MA</span></div>
-                        <div class="plate-part plate-digits" id="plate-digits-val">1234</div>
+                        <div class="plate-part plate-digits" id="plate-digits-val">——</div>
                         <div class="plate-letter-box">
-                            <span class="plate-letter-arabic" id="plate-letter-ar-val">أ</span>
+                            <span class="plate-letter-arabic" id="plate-letter-ar-val">·</span>
                             <div class="plate-letter-divider"></div>
-                            <span class="plate-letter-latin" id="plate-letter-la-val">A</span>
+                            <span class="plate-letter-latin" id="plate-letter-la-val">·</span>
                         </div>
-                        <div class="plate-part plate-region" id="plate-region-val">56</div>
+                        <div class="plate-part plate-region" id="plate-region-val">——</div>
                     </div>
                 </div>
-                
-                <div id="validation-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 8px; display: none;">
-                    <i class='bx bx-error-circle'></i> Format invalide. Exemple correct : 1234-A-56 ou 1234-أ-56
+                <div class="field-msg err" id="immatError" style="display:flex;">
+                    <i class='bx bx-info-circle'></i> Ex : 1234-A-20 · Les tirets sont ajoutés automatiquement
                 </div>
             </div>
 
+            <!-- ── Année ──────────────────────────────────── -->
             <div class="form-group">
-                <label for="annee">Année</label>
-                <input type="number" id="annee" name="annee" min="1900" max="2099" step="1" required>
+                <label for="annee">Année de fabrication</label>
+                <select id="annee" name="annee" required class="year-select" onchange="validateSelect(this)">
+                    <option value="" disabled selected>Sélectionner l'année</option>
+                    {% for y in range(2025, 1984, -1) %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <div class="field-msg err" id="msgAnnee"><i class='bx bx-error-circle'></i> Sélectionnez une année</div>
             </div>
 
+            <!-- ── Statut ─────────────────────────────────── -->
             <div class="form-group">
                 <label for="statut">Statut</label>
-                <select id="statut" name="statut" required>
+                <select id="statut" name="statut" required onchange="validateSelect(this)">
                     <option value="en_stock">En Stock</option>
                     <option value="reservee">Réservée</option>
                     <option value="vendue">Vendue</option>
                 </select>
             </div>
 
+            <!-- ── Prix d'achat ───────────────────────────── -->
             <div class="form-group">
-                <label for="prix_achat">Prix d'Achat (MAD)</label>
-                <input type="number" id="prix_achat" name="prix_achat" step="0.01" required>
+                <label for="prix_achat">Prix d'Achat</label>
+                <div class="price-wrap">
+                    <input type="number" id="prix_achat" name="prix_achat"
+                           min="1000" max="99999999" step="1000" required
+                           placeholder="850 000" onblur="validatePrice(this, 'msgAchat')">
+                    <span class="price-currency">MAD</span>
+                </div>
+                <div class="field-msg err" id="msgAchat"><i class='bx bx-error-circle'></i> Montant invalide (min 1 000 MAD)</div>
             </div>
 
+            <!-- ── Prix de vente ──────────────────────────── -->
             <div class="form-group">
-                <label for="prix_vente">Prix de Vente (MAD)</label>
-                <input type="number" id="prix_vente" name="prix_vente" step="0.01" required>
+                <label for="prix_vente">Prix de Vente</label>
+                <div class="price-wrap">
+                    <input type="number" id="prix_vente" name="prix_vente"
+                           min="1000" max="99999999" step="1000" required
+                           placeholder="980 000" onblur="validatePrice(this, 'msgVente')">
+                    <span class="price-currency">MAD</span>
+                </div>
+                <div class="field-msg err" id="msgVente"><i class='bx bx-error-circle'></i> Montant invalide (min 1 000 MAD)</div>
             </div>
-        </div>
-        
-        <div class="form-actions" style="margin-top: 2rem; text-align: right;">
-            <button type="submit" class="btn"><i class='bx bx-save'></i> Enregistrer la voiture</button>
+
+        </div><!-- /form-grid -->
+
+        <div class="form-actions" style="margin-top:2rem;text-align:right;">
+            <button type="submit" class="btn" id="submitBtn">
+                <i class='bx bx-save'></i> Enregistrer la voiture
+            </button>
         </div>
     </form>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const immatInput = document.getElementById('immatriculation');
-    const previewWrapper = document.getElementById('plate-preview-wrapper');
-    const errorDiv = document.getElementById('validation-error');
-    
-    const digitsVal = document.getElementById('plate-digits-val');
-    const letterArVal = document.getElementById('plate-letter-ar-val');
-    const letterLaVal = document.getElementById('plate-letter-la-val');
-    const regionVal = document.getElementById('plate-region-val');
-    
-    const mapLetters = {
-        'A': { ar: 'أ', fr: 'A' }, 'a': { ar: 'أ', fr: 'A' }, 'أ': { ar: 'أ', fr: 'A' },
-        'B': { ar: 'ب', fr: 'B' }, 'b': { ar: 'ب', fr: 'B' }, 'ب': { ar: 'ب', fr: 'B' },
-        'D': { ar: 'د', fr: 'D' }, 'd': { ar: 'د', fr: 'D' }, 'د': { ar: 'د', fr: 'D' },
-        'H': { ar: 'هـ', fr: 'H' }, 'h': { ar: 'هـ', fr: 'H' }, 'هـ': { ar: 'هـ', fr: 'H' }, 'ه': { ar: 'هـ', fr: 'H' },
-        'O': { ar: 'و', fr: 'O' }, 'o': { ar: 'و', fr: 'O' }, 'W': { ar: 'و', fr: 'W' }, 'w': { ar: 'و', fr: 'W' }, 'و': { ar: 'و', fr: 'W' },
-        'T': { ar: 'ط', fr: 'T' }, 't': { ar: 'ط', fr: 'T' }, 'ط': { ar: 'ط', fr: 'T' },
-        'Y': { ar: 'ي', fr: 'Y' }, 'y': { ar: 'ي', fr: 'Y' }, 'ي': { ar: 'ي', fr: 'Y' },
-        'K': { ar: 'ك', fr: 'K' }, 'k': { ar: 'ك', fr: 'K' }, 'ك': { ar: 'ك', fr: 'K' },
-        'L': { ar: 'ل', fr: 'L' }, 'l': { ar: 'ل', fr: 'L' }, 'ل': { ar: 'ل', fr: 'L' },
-        'M': { ar: 'م', fr: 'M' }, 'm': { ar: 'م', fr: 'M' }, 'م': { ar: 'م', fr: 'M' },
-        'N': { ar: 'ن', fr: 'N' }, 'n': { ar: 'ن', fr: 'N' }, 'ن': { ar: 'ن', fr: 'N' },
-        'S': { ar: 'س', fr: 'S' }, 's': { ar: 'س', fr: 'S' }, 'س': { ar: 'س', fr: 'S' },
-        'E': { ar: 'ع', fr: 'E' }, 'e': { ar: 'ع', fr: 'E' }, 'ع': { ar: 'ع', fr: 'E' },
-        'F': { ar: 'ف', fr: 'F' }, 'f': { ar: 'ف', fr: 'F' }, 'ف': { ar: 'ف', fr: 'F' },
-        'C': { ar: 'ص', fr: 'C' }, 'c': { ar: 'ص', fr: 'C' }, 'ص': { ar: 'ص', fr: 'C' },
-        'G': { ar: 'ق', fr: 'G' }, 'g': { ar: 'ق', fr: 'G' }, 'Q': { ar: 'ق', fr: 'Q' }, 'q': { ar: 'ق', fr: 'Q' }, 'ق': { ar: 'ق', fr: 'Q' },
-        'R': { ar: 'ر', fr: 'R' }, 'r': { ar: 'ر', fr: 'R' }, 'ر': { ar: 'ر', fr: 'R' },
-        'X': { ar: 'ش', fr: 'X' }, 'x': { ar: 'ش', fr: 'X' }, 'ش': { ar: 'ش', fr: 'X' },
-        'Z': { ar: 'ت', fr: 'Z' }, 'z': { ar: 'ت', fr: 'Z' }, 'ت': { ar: 'ت', fr: 'Z' },
-        'J': { ar: 'ج', fr: 'J' }, 'j': { ar: 'ج', fr: 'J' }, 'ج': { ar: 'ج', fr: 'J' },
-        'I': { ar: 'إ', fr: 'I' }, 'i': { ar: 'إ', fr: 'I' }, 'إ': { ar: 'إ', fr: 'I' }
-    };
-    
-    const pattern = /^\s*(\d{1,5})\s*-\s*([a-zA-Z\u0621-\u064A\u0671-\u0680])\s*-\s*(\d{1,3})\s*$/;
-    
-    function validateInput() {
-        const value = immatInput.value.trim();
-        
-        if (value === "") {
-            previewWrapper.style.display = 'none';
-            errorDiv.style.display = 'none';
-            immatInput.style.borderColor = 'var(--border-color)';
-            immatInput.style.boxShadow = 'none';
-            return;
-        }
-        
-        const match = value.match(pattern);
-        
-        if (match) {
-            const digits = match[1];
-            const letter = match[2];
-            const region = match[3];
-            
-            let ar = letter;
-            let fr = letter.toUpperCase();
-            if (mapLetters[letter]) {
-                ar = mapLetters[letter].ar;
-                fr = mapLetters[letter].fr;
-            }
-            
-            digitsVal.textContent = digits;
-            letterArVal.textContent = ar;
-            letterLaVal.textContent = fr;
-            regionVal.textContent = region;
-            
-            previewWrapper.style.display = 'block';
-            errorDiv.style.display = 'none';
-            immatInput.style.borderColor = 'var(--success)';
-            immatInput.style.boxShadow = '0 0 0 2px rgba(16, 185, 129, 0.2)';
-            immatInput.setCustomValidity('');
-        } else {
-            previewWrapper.style.display = 'none';
-            errorDiv.style.display = 'block';
-            immatInput.style.borderColor = 'var(--danger)';
-            immatInput.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-            immatInput.setCustomValidity('Format d\'immatriculation invalide. Exemple correct : 1234-A-56');
-        }
+// ═══════════════════════════════════════════════
+// VIN — 3 auto-advancing inputs
+// ═══════════════════════════════════════════════
+const INVALID_VIN_CHARS = /[IOQ]/i;  // I, O, Q not used in VIN
+const VIN_CHAR = /^[A-HJ-NPR-Z0-9]$/i;
+
+const wmiEl  = document.getElementById('vinWMI');
+const vdsEl  = document.getElementById('vinVDS');
+const visEl  = document.getElementById('vinVIS');
+const vinHid = document.getElementById('vin');
+const vinErr = document.getElementById('vinError');
+const vinErrMsg = document.getElementById('vinErrorMsg');
+const vinPreview = document.getElementById('vinPreview');
+const pvWMI = document.getElementById('pvWMI');
+const pvVDS = document.getElementById('pvVDS');
+const pvVIS = document.getElementById('pvVIS');
+
+function cleanVinChars(str) {
+    return str.replace(/[^A-HJ-NPR-Z0-9]/gi, '').toUpperCase();
+}
+
+function updateVinSeg(segEl, inputEl, filled, isError) {
+    segEl.classList.toggle('filled', filled && !isError);
+    segEl.classList.toggle('error',  isError);
+}
+
+function updateVinPreview() {
+    const wmi = wmiEl.value.trim().toUpperCase();
+    const vds = vdsEl.value.trim().toUpperCase();
+    const vis = visEl.value.trim().toUpperCase();
+    const full = wmi + vds + vis;
+
+    pvWMI.textContent = wmi || 'WMI';
+    pvVDS.textContent = vds || 'VDS';
+    pvVIS.textContent = vis || 'VIS';
+
+    vinPreview.style.display = (wmi || vds || vis) ? 'flex' : 'none';
+
+    // Validate
+    let err = '';
+    if (wmi && wmi.length !== 3) err = 'WMI doit avoir exactement 3 caractères';
+    else if (vds && vds.length !== 6) err = 'VDS doit avoir exactement 6 caractères';
+    else if (vis && vis.length !== 8) err = 'VIS doit avoir exactement 8 caractères';
+    else if (full.length === 17) {
+        // Full check: no I, O, Q
+        if (INVALID_VIN_CHARS.test(full)) err = 'Le VIN ne peut pas contenir les lettres I, O ou Q';
     }
-    
-    immatInput.addEventListener('input', validateInput);
-    
-    if (immatInput.value) {
-        validateInput();
+
+    updateVinSeg(document.getElementById('segWMI'), wmiEl, wmi.length===3, !!err && wmi.length===3 && vds.length===6 && vis.length===8);
+    updateVinSeg(document.getElementById('segVDS'), vdsEl, vds.length===6, false);
+    updateVinSeg(document.getElementById('segVIS'), visEl, vis.length===8, false);
+
+    if (err) {
+        vinErr.style.display = 'flex';
+        vinErrMsg.textContent = err;
+        vinHid.value = '';
+    } else if (full.length === 17) {
+        vinErr.style.display = 'none';
+        vinHid.value = full;
+    } else {
+        vinErr.style.display = 'none';
+        vinHid.value = '';
     }
+}
+
+function vinSegInput(e, maxLen, nextEl) {
+    const input = e.target;
+    // Clean invalid chars
+    const clean = cleanVinChars(input.value);
+    if (clean !== input.value.toUpperCase()) input.value = clean;
+    else input.value = input.value.toUpperCase();
+
+    updateVinPreview();
+    // Auto-advance when segment is full
+    if (input.value.length >= maxLen && nextEl) {
+        nextEl.focus();
+    }
+}
+
+function vinSegKeydown(e, prevEl) {
+    // Backspace on empty → go back
+    if (e.key === 'Backspace' && e.target.value === '' && prevEl) {
+        prevEl.focus();
+    }
+}
+
+wmiEl.addEventListener('input',   e => vinSegInput(e, 3, vdsEl));
+vdsEl.addEventListener('input',   e => vinSegInput(e, 6, visEl));
+visEl.addEventListener('input',   e => vinSegInput(e, 8, null));
+wmiEl.addEventListener('keydown', e => vinSegKeydown(e, null));
+vdsEl.addEventListener('keydown', e => vinSegKeydown(e, wmiEl));
+visEl.addEventListener('keydown', e => vinSegKeydown(e, vdsEl));
+
+// ═══════════════════════════════════════════════
+// IMMATRICULATION — auto-dash
+// ═══════════════════════════════════════════════
+const immatInput  = document.getElementById('immatriculation');
+const plateWrapper= document.getElementById('plate-preview-wrapper');
+const immatErrDiv = document.getElementById('immatError');
+const digitsEl    = document.getElementById('plate-digits-val');
+const letterArEl  = document.getElementById('plate-letter-ar-val');
+const letterLaEl  = document.getElementById('plate-letter-la-val');
+const regionEl    = document.getElementById('plate-region-val');
+
+const LETTER_MAP = {
+    'A':'أ','B':'ب','D':'د','H':'هـ','W':'و','O':'و','T':'ط','Y':'ي','K':'ك',
+    'L':'ل','M':'م','N':'ن','S':'س','E':'ع','F':'ف','C':'ص','G':'ق','Q':'ق',
+    'R':'ر','X':'ش','Z':'ت','J':'ج','I':'إ','U':'و','V':'ف',
+    'أ':'أ','ب':'ب','د':'د','هـ':'هـ','ه':'هـ','و':'و','ط':'ط','ي':'ي',
+    'ك':'ك','ل':'ل','م':'م','ن':'ن','س':'س','ع':'ع','ف':'ف','ص':'ص',
+    'ق':'ق','ر':'ر','ش':'ش','ت':'ت','ج':'ج','إ':'إ'
+};
+
+const PLATE_PAT = /^(\d{1,5})-([a-zA-Z\u0621-\u064A\u0671-\u0680])-(\d{1,3})$/;
+
+immatInput.addEventListener('input', function(e) {
+    const isDeleting = e.inputType && e.inputType.startsWith('delete');
+    const cursor  = this.selectionStart;
+    const oldLen  = this.value.length;
+
+    // Strip dashes and parse
+    const raw = this.value.replace(/-/g, '').toUpperCase();
+    const m2  = raw.match(/^(\d{0,5})([a-zA-Zأبتثجحخدذرزسشصضطظعغفقكلمنهوي]?)(\d{0,3})/i);
+    if (!m2) { validatePlate(); return; }
+
+    const d = m2[1], l = m2[2].toUpperCase(), r = m2[3];
+    let formatted = d;
+    if (d && l) {
+        formatted = d + '-' + l;
+        if (r || !isDeleting) formatted += '-' + r;
+    }
+
+    if (formatted !== this.value) {
+        this.value = formatted;
+        // Restore cursor accounting for inserted dashes
+        const delta = formatted.length - oldLen;
+        const nc = Math.max(0, Math.min(formatted.length, cursor + delta));
+        this.setSelectionRange(nc, nc);
+    }
+
+    validatePlate();
 });
+
+function validatePlate() {
+    const val = immatInput.value.trim();
+    if (!val) {
+        plateWrapper.style.display = 'none';
+        immatErrDiv.style.display  = 'flex';
+        immatErrDiv.querySelector('i').className = 'bx bx-info-circle';
+        immatErrDiv.style.color = '#555';
+        immatErrDiv.querySelector('span') && (immatErrDiv.lastChild.textContent = ' Ex : 1234-A-20 · Les tirets sont ajoutés automatiquement');
+        immatInput.classList.remove('valid','invalid');
+        immatInput.setCustomValidity('');
+        return;
+    }
+    const match = val.match(PLATE_PAT);
+    if (match) {
+        const digits = match[1], letter = match[2].toUpperCase(), region = match[3];
+        const ar = LETTER_MAP[letter] || letter;
+        const fr = letter;
+        digitsEl.textContent   = digits;
+        letterArEl.textContent = ar;
+        letterLaEl.textContent = fr;
+        regionEl.textContent   = region;
+        plateWrapper.style.display = 'block';
+        immatErrDiv.style.display  = 'none';
+        immatInput.classList.add('valid'); immatInput.classList.remove('invalid');
+        immatInput.setCustomValidity('');
+    } else {
+        plateWrapper.style.display = 'none';
+        immatErrDiv.style.display  = 'flex';
+        immatErrDiv.style.color = 'var(--danger, #ef4444)';
+        immatInput.classList.add('invalid'); immatInput.classList.remove('valid');
+        immatInput.setCustomValidity("Format d'immatriculation invalide. Exemple : 1234-A-20");
+    }
+}
+
+// ═══════════════════════════════════════════════
+// Generic field validators
+// ═══════════════════════════════════════════════
+function validateSelect(el) {
+    if (el.value) {
+        el.classList.add('valid'); el.classList.remove('invalid');
+    } else {
+        el.classList.add('invalid'); el.classList.remove('valid');
+    }
+}
+
+function validatePrice(el, msgId) {
+    const val = parseFloat(el.value);
+    const msgEl = document.getElementById(msgId);
+    if (!el.value || isNaN(val) || val < 1000) {
+        el.classList.add('invalid'); el.classList.remove('valid');
+        if (msgEl) msgEl.style.display = 'flex';
+        el.setCustomValidity('Montant invalide');
+    } else {
+        el.classList.add('valid'); el.classList.remove('invalid');
+        if (msgEl) msgEl.style.display = 'none';
+        el.setCustomValidity('');
+    }
+}
+
+// ═══════════════════════════════════════════════
+// Form submit — final validation
+// ═══════════════════════════════════════════════
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+    let ok = true;
+
+    // VIN
+    const vinVal = vinHid.value;
+    if (!vinVal || vinVal.length !== 17) {
+        vinErr.style.display = 'flex';
+        vinErrMsg.textContent = 'Le VIN doit comporter exactement 17 caractères (WMI+VDS+VIS)';
+        wmiEl.focus();
+        ok = false;
+    }
+
+    // Immat
+    if (!immatInput.value.match(PLATE_PAT)) {
+        immatInput.classList.add('invalid');
+        immatInput.setCustomValidity("Format invalide");
+        if (ok) immatInput.focus();
+        ok = false;
+    }
+
+    // Modèle
+    const modEl = document.getElementById('id_modele');
+    if (!modEl.value) {
+        modEl.classList.add('invalid');
+        document.getElementById('msgModele').style.display = 'flex';
+        if (ok) modEl.focus();
+        ok = false;
+    }
+
+    // Année
+    const annEl = document.getElementById('annee');
+    if (!annEl.value) {
+        annEl.classList.add('invalid');
+        document.getElementById('msgAnnee').style.display = 'flex';
+        if (ok) annEl.focus();
+        ok = false;
+    }
+
+    // Prix
+    ['prix_achat','prix_vente'].forEach(id => {
+        const el = document.getElementById(id);
+        const val = parseFloat(el.value);
+        if (!el.value || isNaN(val) || val < 1000) {
+            el.classList.add('invalid');
+            const msgId = id === 'prix_achat' ? 'msgAchat' : 'msgVente';
+            document.getElementById(msgId).style.display = 'flex';
+            ok = false;
+        }
+    });
+
+    if (!ok) e.preventDefault();
+});
+
+// Init
+validatePlate();
 </script>
 {% endblock %}
